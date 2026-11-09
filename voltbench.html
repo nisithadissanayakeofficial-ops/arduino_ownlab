@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VoltBench | Build and program Arduino circuits and a line follower robot</title>
+<meta name="description" content="Build Arduino circuits, write C++ sketches, upload and run them, then assemble and program a line follower robot.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light dark;--bg:#0d1b17;--panel:#14271f;--ink:#e7f3ec;--muted:#93ad9f;--line:#244237;--cu:#f0a23b;--ok:#3ddc97;--bad:#ff6b6b;--warn:#ffd166;--on-cu:#1a1000;
+--d:"Chakra Petch","Arial Narrow",sans-serif;--b:"IBM Plex Sans",system-ui,sans-serif;--m:"JetBrains Mono",ui-monospace,Consolas,monospace}
+@media(prefers-color-scheme:light){:root{--bg:#edf3ef;--panel:#fff;--ink:#0f2a22;--muted:#4d675a;--line:#cbd9d1;--cu:#b86a00;--ok:#0b8a57;--bad:#c62828;--warn:#9a6b00;--on-cu:#fff}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:400 1rem/1.5 var(--b)}
+:focus-visible{outline:3px solid var(--cu);outline-offset:2px}
+.w{max-width:1180px;margin:0 auto;padding:0 1.1rem}
+h1,h2,h3{font-family:var(--d);margin:0;line-height:1}h1{font-size:clamp(2rem,5vw,3.2rem)}h2{font-size:1.5rem;margin-bottom:.6rem}h3{font-size:1.1rem}
+header{border-bottom:1px solid var(--line);padding:1rem 0}header .w{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}
+header p{margin:.3rem 0 0;color:var(--muted);max-width:60ch}
+.tabs{display:flex;gap:.4rem}.tabs button{font:600 1rem var(--d)}
+button,select,input,textarea{font:inherit;color:inherit}button{cursor:pointer}
+.b{background:var(--panel);border:1px solid var(--line);padding:.5rem .85rem;border-radius:4px;font-weight:600}.b:hover{border-color:var(--cu)}
+.b[aria-pressed=true]{background:var(--cu);color:var(--on-cu);border-color:var(--cu)}.b:disabled{opacity:.5;cursor:not-allowed}
+.pri{background:var(--cu);color:var(--on-cu);border-color:var(--cu)}
+select,input[type=number]{background:var(--bg);border:1px solid var(--line);padding:.35rem .5rem;border-radius:4px;max-width:100%}
+.card{background:var(--panel);border:1px solid var(--line);padding:1rem;border-radius:6px}
+.g2{display:grid;grid-template-columns:1fr 1.15fr;gap:1rem;margin:1rem 0}.g3{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:.8rem}
+@media(max-width:860px){.g2,.ide{grid-template-columns:1fr!important}}
+.m{color:var(--muted);font-size:.9rem}.row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+.led{width:46px;height:46px;border-radius:50%;border:3px solid var(--line);background:#ff3b3b;opacity:.15;transition:opacity .08s}
+.cc{display:grid;gap:.5rem}.cc .t{display:flex;justify-content:space-between;align-items:center}
+.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}
+.parts{display:grid;grid-template-columns:1fr 1fr;gap:.5rem .8rem;font-size:.9rem}.parts label{display:grid;gap:.15rem;color:var(--muted)}
+#chk{list-style:none;margin:.6rem 0 0;padding:0;font-size:.9rem}#chk li{padding:.15rem 0}
+canvas{width:100%;display:block;background:#f4f7f5;border-radius:4px;border:1px solid var(--line)}
+.ide{display:grid;grid-template-columns:1.4fr 1fr;gap:1rem;margin-bottom:2rem}
+textarea{width:100%;height:340px;font:400 .85rem/1.45 var(--m);background:#0a130f;color:#d9efe3;border:1px solid var(--line);border-radius:4px;padding:.7rem;resize:vertical;tab-size:2}
+#con{font:400 .82rem/1.4 var(--m);background:#0a130f;color:#a9e8c8;height:340px;overflow:auto;padding:.7rem;border-radius:4px;border:1px solid var(--line);margin:0;white-space:pre-wrap}
+.st{min-height:1.5rem;font-weight:600}.hid{display:none}
+footer{padding:1.5rem 0;color:var(--muted);font-size:.85rem}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+#dsg,#wsg{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:4px;touch-action:none}#wsg{min-width:760px}
+#dsg [data-id]{cursor:grab}.pin{cursor:pointer}#chk{max-height:9rem;overflow:auto}
+label input[type=range]{display:block}output{color:var(--cu);margin-left:.4rem}
+</style>
+</head>
+<body>
+<header><div class="w"><div><h1>VoltBench</h1><p>Build an Arduino circuit, write the C++ sketch, upload it and watch it run. Then assemble a line follower robot and program it around a track.</p></div>
+<div class="tabs" role="tablist"><button class="b" id="tC" role="tab" aria-pressed="true">Circuit lab</button><button class="b" id="tR" role="tab" aria-pressed="false">Line follower</button></div></div></header>
+<main class="w">
+<section id="pc" class="g2" aria-label="Circuit lab">
+ <div class="card"><h2>Components</h2><p class="m">Add parts, then pick the Arduino pin each one connects to. An LED needs a series resistor or it burns out.</p>
+  <div class="row" id="add"><button class="b" data-a="led">+ LED</button><button class="b" data-a="btn">+ Push button</button><button class="b" data-a="pot">+ Potentiometer</button><button class="b" data-a="buz">+ Buzzer</button><button class="b" data-a="ir">+ IR sensor</button><button class="b" data-a="us">+ Ultrasonic</button><button class="b" data-a="dcm">+ DC motor</button><button class="b" data-a="srv">+ Servo</button></div>
+  <p class="m" id="cw" style="margin-top:.7rem"></p></div>
+ <div class="card"><h2>Your circuit</h2><div class="g3" id="cards"></div></div>
+</section>
+<section id="pr" class="hid" aria-label="Line follower builder">
+ <div class="card" style="margin:1rem 0"><div class="row" style="justify-content:space-between">
+  <div class="row"><button class="b" data-s="d" aria-pressed="true">1 Design chassis</button><button class="b" data-s="w" aria-pressed="false">2 Wire circuit</button><button class="b" data-s="u" aria-pressed="false">3 Test on track</button></div>
+  <div class="row"><span id="cs" class="m" role="status"></span><button class="b pri" id="ucar">Upload car to simulation</button></div></div>
+  <ul id="chk"></ul></div>
+ <div id="sd" class="g2" style="margin-top:0"><div class="card"><h2>Chassis designer</h2>
+  <div class="row" style="margin-bottom:.6rem"><button class="b" id="mo" aria-pressed="true">1 Draw outline</button><button class="b" id="mp" aria-pressed="false">2 Place parts</button></div>
+  <div id="otool" class="row" style="margin-bottom:.6rem"><button class="b" data-pre="rect">Rectangle</button><button class="b" data-pre="cham">Chamfered</button><button class="b" data-pre="round">Rounded</button><button class="b" data-pre="wedge">Wedge</button><button class="b" data-pre="none">Clear</button><button class="b" id="vc">Curve / straight</button><button class="b" id="vd">Delete point</button></div>
+  <p class="m" id="hint"></p>
+  <div class="row" id="pal" style="margin:.7rem 0"><button class="b" data-t="mcu">+ Arduino</button><button class="b" data-t="drv">+ Motor driver</button><button class="b" data-t="bat">+ Battery</button><button class="b" data-t="mot">+ Motor and wheel</button><button class="b" data-t="cas">+ Caster</button><button class="b" data-t="ir">+ IR sensor</button><button class="b" data-t="us">+ Ultrasonic</button></div>
+  <button class="b" id="qs">Quick-start layout</button> <button class="b" id="cp">Clear all</button><div id="insp" class="cc" style="margin-top:.8rem"></div></div>
+  <div class="card"><svg id="dsg" viewBox="0 0 400 460" role="img" aria-label="Chassis designer. Draw the outline with straight lines and curves, then place parts at real size. The front is at the top."></svg><p class="m">The front of the car is at the top. Sensor and wheel positions change how the car drives.</p></div></div>
+ <div id="sw" class="card hid"><h2>Wiring bench</h2><p class="m">Click a pin, then click another pin to connect them. Click a wire to remove it.</p><div style="overflow:auto"><svg id="wsg" role="img" aria-label="Wiring diagram of all parts"></svg></div>
+  <div class="row" style="margin-top:.7rem"><button class="b" id="auto">Auto-wire (show a working example)</button><button class="b" id="nw">Remove all wires</button></div></div>
+ <div id="su" class="g2 hid" style="margin-top:0;grid-template-columns:1fr"><div class="card"><canvas id="trk" width="900" height="462" role="img" aria-label="Competition track with zones 1 to 4, a dashed section and the robot"></canvas><p class="m" id="lapInfo" aria-live="polite" style="margin-top:.5rem">Laps: 0</p></div>
+  <div class="card"><h2>Test conditions</h2><label class="row"><input type="checkbox" id="obs"> Place an obstacle on the track</label><p class="m">Write your sketch below, press Upload, then Run. If the car misbehaves, go back and fix the wiring or the design, then upload the car again.</p></div></div>
+</section>
+<section class="card" style="margin-bottom:1rem"><div class="row" style="justify-content:space-between"><div class="row"><label for="ex" class="m">Example sketch</label><select id="ex"></select></div>
+ <div class="row"><button class="b" id="up">Upload</button><button class="b pri" id="run">Run</button><button class="b" id="rs">Reset</button>
+ <select id="rt" aria-label="Simulation speed"><option value="1">1x</option><option value="4" selected>4x</option><option value="10">10x</option></select></div></div>
+ <div class="st" id="st" role="status" style="margin-top:.5rem"></div></section>
+<section class="ide"><div><textarea id="code" spellcheck="false" aria-label="Arduino C++ sketch"></textarea></div><pre id="con" aria-live="polite" aria-label="Serial monitor"></pre></section>
+</main>
+<footer><div class="w">VoltBench runs your sketch in a simplified simulator: a subset of Arduino C++ translated to JavaScript. Integer division is not truncated, and arrays and Strings are not supported. Not a replacement for real hardware testing.</div></footer>
+<script>
+(function(){
+const $=s=>document.querySelector(s),cl=(v,a,b)=>Math.min(b,Math.max(a,v)),pn=p=>p>13?'A'+(p-14):'D'+p;
+let car=null,carSig='',lastHigh={},sv={},tab='c',T=0,out=new Array(20).fill(0),md={},gen=null,wake=0,run=false,compiled=null,guard=0,buf='',lines=[],last=0,up=false;
+const PWM=[3,5,6,9,10,11];
+/* --- Arduino API --- */
+const log=t=>{lines.push('['+(T/1000).toFixed(3)+' s] '+t);if(lines.length>150)lines.shift();$('#con').textContent=lines.join('\n');$('#con').scrollTop=1e6};
+const rd=p=>{if(tab==='c'){const c=cc.find(c=>c.pin===p&&(c.t==='btn'||c.t==='pot'||c.t==='ir'));if(!c)return md[p]===2?1023:0;
+  if(c.t==='ir')return 120+c.v*7.6;return c.t==='pot'?c.v*10.23:(c.h?(md[p]===2?0:1023):(md[p]===2?1023:0))}
+ const s=car&&car.si.find(q=>q.pin===p);return s?sense(s):0};
+const api={HIGH:1,LOW:0,INPUT:0,OUTPUT:1,INPUT_PULLUP:2,LED_BUILTIN:13,A0:14,A1:15,A2:16,A3:17,A4:18,A5:19,true:true,
+ pinMode:(p,m)=>{md[p]=m},digitalWrite:(p,v)=>{out[p]=v?255:0;if(v)lastHigh[p]=T},pulseIn:p=>{const lh=k=>lastHigh[k]===undefined?-999:lastHigh[k];if(tab==='c'){const c=cc.find(c=>c.t==='us'&&c.p2===p);return c&&T-lh(c.pin)<=60?Math.round(c.v*20/.343):0}if(!car||!car.us||p!==car.us.echo||T-lh(car.us.trig)>60)return 0;const d=usDist();return d>=4000?0:Math.round(d*2/.343)},Servo:class{attach(p){this.p=p;if(sv[p]===undefined)sv[p]=90}write(a){if(this.p!==undefined)sv[this.p]=cl(a,0,180)}read(){return Math.round(sv[this.p]||0)}detach(){}writeMicroseconds(u){this.write((u-544)*180/1856)}},analogWrite:(p,v)=>{out[p]=cl(Math.round(v),0,255)},
+ digitalRead:p=>rd(p)>=512?1:0,analogRead:p=>Math.round(rd(p)),millis:()=>Math.floor(T),micros:()=>Math.floor(T*1000),
+ delay:function*(ms){yield Math.max(0,ms)},delayMicroseconds:()=>{},constrain:cl,abs:Math.abs,min:Math.min,max:Math.max,sqrt:Math.sqrt,pow:Math.pow,
+ map:(x,a,b,c,d)=>Math.trunc((x-a)*(d-c)/(b-a)+c),random:(a,b)=>b===undefined?Math.floor(Math.random()*a):a+Math.floor(Math.random()*(b-a)),
+ Serial:{begin(){},print(x){buf+=x},println(x){log(buf+(x===undefined?'':x));buf=''}}};
+const guardFn=()=>{if(++guard>2e5)throw new Error('Infinite loop without delay() detected')};
+/* --- C++ subset to JavaScript --- */
+const TY=/^(void|int|long|short|float|double|byte|bool|boolean|char|unsigned|signed|const|static|volatile|word|size_t|u?int(8|16|32)_t)$/,WS=/^(\s+|\/\/.*|\/\*[\s\S]*)$/;
+function tp(src){
+ src=src.replace(/\bServo\s+(\w+)\s*;/g,'const $1 = new Servo();').replace(/^\s*#include.*$/gm,'').replace(/^\s*#define\s+(\w+)\s+(.+)$/gm,'const $1 = $2;');
+ const fn=new Set(['delay']),re=/\b(?:void|int|long|float|double|bool|boolean|byte|unsigned\s+long|unsigned\s+int)\s+(\w+)\s*\([^)]*\)\s*\{/g;let m;while(m=re.exec(src))fn.add(m[1]);
+ const tk=src.match(/\/\/.*|\/\*[\s\S]*?\*\/|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\w+|\s+|[\s\S]/g)||[];
+ const sg=i=>{while(i<tk.length&&WS.test(tk[i]))i++;return i};
+ let o='',pd=0,wr=[],fp=false,fpd=0,lst='';
+ for(let i=0;i<tk.length;i++){const t=tk[i];
+  if(WS.test(t)){o+=t;continue}
+  if(TY.test(t)){let j=i;while(j<tk.length&&(TY.test(tk[j])||/^\s+$/.test(tk[j])))j++;
+   if(tk[j]===')'&&lst==='('){o=o.replace(/\(\s*$/,'');pd--;i=j;lst='';continue}
+   if(fp){i=j-1;continue}
+   if(/^\w+$/.test(tk[j])&&tk[sg(j+1)]==='('){o+='function* '+tk[j];i=j;fp=true;lst=tk[j];continue}
+   o+='let ';i=j-1;continue}
+  if(t==='while'&&tk[sg(i+1)]==='('){o+='while(__g(),';pd++;i=sg(i+1);lst='(';continue}
+  if(fn.has(t)&&tk[sg(i+1)]==='('){o+='(yield* '+t;wr.push(pd+1);lst=t;continue}
+  if(t==='('){pd++;if(fp&&!fpd)fpd=pd}
+  if(t===')'){if(fp&&pd===fpd){fp=false;fpd=0}if(wr.length&&wr[wr.length-1]===pd){o+=')';wr.pop()}pd--}
+  o+=t;lst=t}
+ return o}
+const keys=Object.keys(api).filter(k=>k!=='true');
+function compile(src){const js=tp(src);
+ const f=new Function('__api','__g','"use strict";const {'+keys.join(',')+'}=__api;\n'+js+'\nreturn{setup:typeof setup==="function"?setup:null,loop:typeof loop==="function"?loop:null};');
+ const p=f(api,guardFn);if(!p.setup)throw new Error("undefined reference to 'setup()'");if(!p.loop)throw new Error("undefined reference to 'loop()'");return f}
+function err(e){let m=e.message||String(e);m=m.replace(/(\w+) is not defined/,"'$1' was not declared in this scope");return m}
+/* --- circuit lab --- */
+let cc=[{t:'led',pin:13,r:220},{t:'btn',pin:2,h:0}];
+const NM={led:'LED',btn:'Push button',pot:'Potentiometer',buz:'Buzzer',ir:'IR sensor',us:'Ultrasonic sensor',dcm:'DC motor + driver',srv:'Servo motor'},RES=[[0,'No resistor'],[220,'220 ohm'],[1000,'1 kohm'],[10000,'10 kohm']];
+const PL={led:[['pin','Pin']],btn:[['pin','Pin']],pot:[['pin','Wiper pin']],buz:[['pin','Pin']],ir:[['pin','OUT pin']],us:[['pin','TRIG pin'],['p2','ECHO pin']],dcm:[['pin','IN1 pin'],['p2','IN2 pin'],['p3','EN (PWM) pin']],srv:[['pin','Signal pin']]},DEFP={led:[3],btn:[3],pot:[14],buz:[3],ir:[15],us:[11,12],dcm:[7,8,5],srv:[9]};
+const popt=(sel,from=2)=>{let s='';for(let p=from;p<20;p++)s+='<option value="'+p+'"'+(p===sel?' selected':'')+'>'+pn(p)+'</option>';return s};
+const GFX={ir:i=>'<svg viewBox="0 0 120 70" width="150" aria-hidden="true"><rect x="40" y="6" width="40" height="16" rx="2" fill="#2a8"/><circle cx="52" cy="14" r="4" fill="#fff"/><circle cx="68" cy="14" r="4" fill="#223"/><path d="M52 18L38 56M68 18L82 56" stroke="#e33" stroke-dasharray="3" fill="none"/><rect id="Ir'+i+'" x="10" y="56" width="100" height="10" stroke="#888"/><circle id="Il'+i+'" cx="74" cy="10" r="3"/></svg>',
+us:i=>'<svg viewBox="0 0 220 60" width="220" aria-hidden="true"><rect x="4" y="14" width="30" height="32" rx="3" fill="#27a"/><circle cx="14" cy="30" r="8" fill="#fff"/><circle cx="26" cy="30" r="8" fill="#fff"/><g id="Uw'+i+'" opacity="0" stroke="#4af" fill="none" stroke-width="2"><path d="M44 20Q56 30 44 40M56 14Q74 30 56 46"/></g><rect id="Uo'+i+'" x="100" y="12" width="10" height="36" fill="#e07b00"/></svg>',
+dcm:i=>'<svg viewBox="0 0 120 80" width="140" aria-hidden="true"><rect x="5" y="25" width="50" height="30" fill="#777"/><g id="Mg'+i+'" transform="translate(85 40)"><circle r="26" fill="none" stroke="#999"/><path d="M0 0L0-24M0 0L21 12M0 0L-21 12" stroke="#f0a23b" stroke-width="5"/></g></svg>',
+srv:i=>'<svg viewBox="0 0 140 80" width="160" aria-hidden="true"><rect x="30" y="40" width="80" height="34" rx="4" fill="#245"/><line id="Sa'+i+'" x1="70" y1="40" x2="70" y2="6" stroke="#f0a23b" stroke-width="6" stroke-linecap="round"/><circle cx="70" cy="40" r="6" fill="#ccc"/></svg>'};
+function cards(){$('#cards').innerHTML=cc.map((c,i)=>{let x='';const sl=(lo,hi,l)=>'<label class="m">'+l+'<input type="range" min="'+lo+'" max="'+hi+'" value="'+c.v+'" data-i="'+i+'" data-k="v"></label>';
+ if(c.t==='led')x='<div class="led" id="L'+i+'"></div><label class="m">Series resistor <select data-i="'+i+'" data-k="r">'+RES.map(r=>'<option value="'+r[0]+'"'+(r[0]===c.r?' selected':'')+'>'+r[1]+'</option>').join('')+'</select></label>';
+ if(c.t==='btn')x='<button class="b" id="B'+i+'" data-h="'+i+'">Hold to press</button>';
+ if(c.t==='pot')x=sl(0,100,'Knob position');if(c.t==='ir')x=GFX.ir(i)+sl(0,100,'Surface under sensor: white to black');if(c.t==='us')x=GFX.us(i)+sl(2,200,'Object distance (cm)');
+ if(c.t==='dcm')x=GFX.dcm(i);if(c.t==='srv')x=GFX.srv(i);if(c.t==='buz')x='<div id="Z'+i+'" class="m">silent</div>';
+ return '<div class="card cc"><div class="t"><h3>'+NM[c.t]+'</h3><button class="b" data-x="'+i+'" aria-label="Remove '+NM[c.t]+'">Remove</button></div>'+x+
+ PL[c.t].map(q=>'<label class="m">'+q[1]+' <select data-i="'+i+'" data-k="'+q[0]+'">'+popt(c[q[0]],c.t==='pot'?14:2)+'</select></label>').join('')+'<div class="m" id="D'+i+'"></div></div>'}).join('');
+ let w='';const u={};cc.forEach(c=>{if(['led','buz','dcm','srv'].includes(c.t)||c.t==='us'){const k=c.pin;if(u[k])w='Two outputs share '+pn(k)+'. Give each its own pin.';u[k]=1}});$('#cw').textContent=w}
+function ucard(){cc.forEach((c,i)=>{const d=$('#D'+i);if(!d)return;const o=md[c.pin]===1?out[c.pin]/255:0;
+ if(c.t==='led'){if(c.r===0&&o>0)c.burnt=true;const I=c.r?3/c.r:0,br=c.burnt?0:cl(I/.015,0,1)*o;$('#L'+i).style.opacity=.15+.85*br;
+  d.className='m'+(c.burnt?' bad':'');d.textContent=c.burnt?'Burnt out. Add a resistor and press Reset.':c.r?'D'+c.pin+' > '+RES.find(r=>r[0]===c.r)[1]+' > LED > GND, '+(I*1000*o).toFixed(1)+' mA':'D'+c.pin+' > LED > GND (no resistor!)'}
+ if(c.t==='btn')d.textContent=pn(c.pin)+' > button > GND, reads '+(rd(c.pin)>=512?'HIGH':'LOW')+(md[c.pin]===2?' (pull-up)':' (set INPUT_PULLUP)');
+ if(c.t==='pot')d.textContent='5V > pot > GND, wiper to '+pn(c.pin)+', reads '+Math.round(rd(c.pin));
+ if(c.t==='buz'){const on=md[c.pin]===1&&out[c.pin]>0;$('#Z'+i).textContent=on?'buzzing':'silent';d.textContent=pn(c.pin)+' > buzzer > GND'}
+ if(c.t==='ir'){const v=rd(c.pin),g=Math.round(255-2.2*c.v);$('#Ir'+i).setAttribute('fill','rgb('+g+','+g+','+g+')');$('#Il'+i).setAttribute('fill',v>500?'#f33':'#422');d.textContent='VCC 5V, GND, OUT > '+pn(c.pin)+', reads '+Math.round(v)+(v>500?' (dark surface)':' (light surface)')}
+ if(c.t==='us'){$('#Uo'+i).setAttribute('x',34+c.v*.85);$('#Uw'+i).setAttribute('opacity',run&&T-(lastHigh[c.pin]===undefined?-999:lastHigh[c.pin])<60?1:0);d.textContent='TRIG '+pn(c.pin)+', ECHO '+pn(c.p2)+', object at '+c.v+' cm, echo takes '+Math.round(c.v*20/.343)+' us'}
+ if(c.t==='dcm'){const dir=(out[c.pin]>127?1:0)-(out[c.p2]>127?1:0),sp=dir*out[c.p3]/255;c.a=(c.a||0)+sp*16;$('#Mg'+i).setAttribute('transform','translate(85 40) rotate('+c.a+')');d.textContent=sp?Math.abs(Math.round(sp*100))+'% '+(sp>0?'forward':'reverse'):'stopped (IN1 '+pn(c.pin)+', IN2 '+pn(c.p2)+', EN '+pn(c.p3)+')'}
+ if(c.t==='srv'){const t=sv[c.pin];c.ang=c.ang===undefined?90:c.ang;c.ang+=cl((t===undefined?90:t)-c.ang,-4,4);$('#Sa'+i).setAttribute('transform','rotate('+(c.ang-90)+' 70 40)');d.textContent='Signal '+pn(c.pin)+', angle '+Math.round(c.ang)+' deg'+(t===undefined?' (call attach() first)':'')}})}
+$('#add').onclick=e=>{const a=e.target.dataset.a;if(!a)return;const d=DEFP[a],used=cc.map(c=>c.pin);let p=d[0];if(['led','btn','buz'].includes(a))while(used.includes(p)&&p<19)p++;cc.push({t:a,pin:p,p2:d[1],p3:d[2],r:220,h:0,v:a==='us'?60:a==='ir'?20:50});cards()};
+$('#cards').addEventListener('change',e=>{const i=e.target.dataset.i,k=e.target.dataset.k;if(i===undefined)return;cc[i][k]=+e.target.value;cards()});
+$('#cards').addEventListener('input',e=>{const i=e.target.dataset.i;if(i!==undefined&&e.target.dataset.k==='v')cc[i].v=+e.target.value});
+$('#cards').addEventListener('click',e=>{const x=e.target.dataset.x;if(x!==undefined){cc.splice(+x,1);cards()}});
+const hold=(e,v)=>{const i=e.target.dataset.h;if(i!==undefined)cc[i].h=v};
+$('#cards').addEventListener('pointerdown',e=>hold(e,1));addEventListener('pointerup',()=>cc.forEach(c=>c.h=0));
+/* --- robot designer, wiring bench and car build --- */
+const ARD=['5V','GND','VIN',...Array.from({length:12},(_,i)=>'D'+(i+2)),...Array.from({length:6},(_,i)=>'A'+i)],pnum=n=>n[0]==='D'?+n.slice(1):14+ +n.slice(1);
+const DRV=[[['ENA','l','ea'],['IN1','l','i1'],['IN2','l','i2'],['ENB','l','eb'],['IN3','l','i3'],['IN4','l','i4'],['12V','l','vm'],['GND','l','gnd'],['OUT1','r','o1'],['OUT2','r','o2'],['OUT3','r','o3'],['OUT4','r','o4']],
+[['PWMA','l','ea'],['AIN1','l','i1'],['AIN2','l','i2'],['PWMB','l','eb'],['BIN1','l','i3'],['BIN2','l','i4'],['VM','l','vm'],['VCC','l','vcc'],['GND','l','gnd'],['STBY','l','stby'],['AO1','r','o1'],['AO2','r','o2'],['BO1','r','o3'],['BO2','r','o4']]];
+const IRP=[[['VCC','l','vcc'],['GND','l','gnd'],['OUT','l','out0']],[['VCC','l','vcc'],['GND','l','gnd'],...[1,2,3,4,5].map(k=>['OUT'+k,'l','out'+(k-1)])],[['VCC','l','vcc'],['GND','l','gnd'],['D0','l','out0']]];
+const pins=p=>p.t==='mcu'?ARD.map(n=>[n,'r',n]):p.t==='drv'?DRV[p.v]:p.t==='bat'?[['+','l','+'],['-','l','-']]:p.t==='mot'?[['M+','l','m+'],['M-','l','m-']]:p.t==='ir'?IRP[p.v]:p.t==='us'?[['VCC','l','vcc'],['TRIG','l','trig'],['ECHO','l','echo'],['GND','l','gnd']]:[];
+const PT={mcu:['Arduino Uno',[69,53],[]],drv:['Motor driver',[43,43],['L298N dual H-bridge','TB6612FNG dual driver']],bat:['Battery',[70,40],['4xAA pack 6V','2x18650 pack 7.4V','9V PP3 battery','3x18650 pack 11.1V']],mot:['Motor',[40,22],[]],cas:['Ball caster',[16,16],[]],ir:['IR sensor',[30,14],['TCRT5000 analog module','5-channel IR array','Digital IR module (D0)']],us:['Ultrasonic HC-SR04',[45,20],[]]};
+const MAX={mcu:1,drv:1,bat:1,mot:2,cas:1,ir:3,us:1};
+const nm=p=>p.t==='mot'?'Motor ('+(p.x<200?'left':'right')+')':PT[p.t][2][p.v]||PT[p.t][0],sz0=p=>p.t==='ir'&&p.v===1?[58,14]:p.t==='bat'?[[62,45],[76,40],[26,48],[76,58]][p.v]:PT[p.t][1];const sz=p=>{const z=sz0(p);return p.r?[z[1],z[0]]:z};
+let parts=[],wires=[],sel=null,selPin=null,uid=1,stepV='d',curV=null,uf={};
+function add(t){if(ol.length<3)ol=PRE('rect');const n=parts.filter(p=>p.t===t).length;if(n>=MAX[t])return;const b=bb(),top=b.y0,bot=b.y1,mid=(top+bot)/2,pos={mcu:[200,top+70],drv:[200,top+125],bat:[200,top+170],cas:[200,bot-12],us:[200,top-2],ir:[200+(n-1)*18,top-6],mot:[200+(n%2?1:-1)*((b.x1-b.x0)/2-18),mid+(bot-top)/6]}[t];
+ parts.push({id:'p'+uid++,t,x:pos[0],y:pos[1],v:0,d:65,w:18});sel=parts[parts.length-1].id}
+const fd=k=>{if(uf[k]===undefined)uf[k]=k;while(uf[k]!==k)k=uf[k];return k},un=(a,b)=>{uf[fd(a)]=fd(b)};
+function val(){uf={};wires.forEach(w=>un(w[0],w[1]));const E=[],Wn=[],g=t=>parts.filter(p=>p.t===t),mcu=g('mcu')[0],drv=g('drv')[0],bat=g('bat')[0],mot=g('mot').sort((a,b)=>a.x-b.x),irs=g('ir').sort((a,b)=>a.x-b.x),us=g('us')[0];
+ [[mcu,'an Arduino'],[drv,'a motor driver'],[bat,'a battery']].forEach(n=>{if(!n[0])E.push('Add '+n[1]+' to the chassis')});
+ if(mot.length<2)E.push('Add two motors with wheels, one on each side');if(!irs.length)E.push('Add at least one IR line sensor');if(!g('cas').length)Wn.push('No caster: the rear of the chassis will drag');
+ const P=osamp();if(P.length<3)E.push('Draw the chassis outline (at least 3 points)');else parts.forEach(p=>{if(!inside(p.x,p.y,P)&&!((p.t==='ir'||p.t==='us')&&edist(p.x,p.y,P)[0]<25))E.push(nm(p)+' is not on the chassis. Move it onto the outline')});
+ if(E.length)return{E,Wn};
+ const pl=(p,r)=>pins(p).find(q=>q[2]===r)[0],N=(p,r)=>fd(p.id+':'+pl(p,r)),n5=fd(mcu.id+':5V'),ng=fd(mcu.id+':GND'),nv=fd(mcu.id+':VIN'),bp=N(bat,'+'),bm=N(bat,'-');
+ const ap=net=>ARD.filter(n=>!['5V','GND','VIN'].includes(n)&&fd(mcu.id+':'+n)===net);
+ if(n5===ng)E.push('Short circuit: 5V is connected to GND');if(bp===bm)E.push('Short circuit: battery + is connected to battery -');if(bp===n5)E.push('Battery + is wired to the 5V pin. That would destroy the Arduino');
+ if(nv!==bp)E.push('Arduino has no power: connect battery + to the VIN pin');if(bm!==ng)E.push('No common ground: connect battery - to Arduino GND');
+ if(N(drv,'vm')!==bp)E.push('Driver '+pl(drv,'vm')+' pin is not connected to battery +');if(N(drv,'gnd')!==ng)E.push('Driver GND is not connected to GND');
+ if(drv.v===1){if(N(drv,'vcc')!==n5)E.push('TB6612 VCC must connect to Arduino 5V');if(N(drv,'stby')!==n5)E.push('TB6612 STBY must connect to 5V or the driver stays asleep')}
+ const sg=(p,r,what,opt)=>{const n=N(p,r);if(n===n5)return{c:1};if(n===ng)return{c:0};const a=ap(n);if(a.length===1)return{pin:pnum(a[0])};if(!opt)E.push(a.length?what+' is shorted to several Arduino pins':what+' is not connected to an Arduino pin');return null};
+ const ch=[['ea','i1','i2'],['eb','i3','i4']].map(c=>({en:sg(drv,c[0],'Driver '+pl(drv,c[0])),i1:sg(drv,c[1],'Driver '+pl(drv,c[1])),i2:sg(drv,c[2],'Driver '+pl(drv,c[2]))}));
+ ch.forEach(c=>{if(c.en&&c.en.pin!==undefined&&![3,5,6,9,10,11].includes(c.en.pin))Wn.push('Speed pin D'+c.en.pin+' is not PWM. analogWrite will act like on/off')});
+ const used=[],ms=mot.slice(0,2).map((m,i)=>{const a=N(m,'m+'),b=N(m,'m-'),s=m.x<200?'left':'right';let c=-1,pol=1;
+  [[0,'o1','o2'],[1,'o3','o4']].forEach(q=>{if(a===N(drv,q[1])&&b===N(drv,q[2])){c=q[0];pol=1}if(a===N(drv,q[2])&&b===N(drv,q[1])){c=q[0];pol=-1}});
+  if(c<0)E.push('Motor ('+s+'): connect its two terminals to the two OUT pins of one driver channel');else{used.push(c);if(pol<0)Wn.push('Motor ('+s+') is wired in reverse and will spin backwards when you command forward')}
+  return{ch:c,pol,x:m.x,y:m.y,d:m.d,w:m.w}});
+ if(used.length===2&&used[0]===used[1])E.push('Both motors are on the same driver channel');if((ms[0].x<200)===(ms[1].x<200))E.push('Place one motor on each side of the chassis');
+ const si=[];irs.forEach(p=>{if(N(p,'vcc')!==n5)E.push(nm(p)+': VCC must connect to 5V');if(N(p,'gnd')!==ng)E.push(nm(p)+': GND must connect to GND');
+  (p.v===1?[-24,-12,0,12,24]:[0]).forEach((o,k)=>{const s=sg(p,'out'+k,'',1);if(s&&s.pin!==undefined){if(p.v!==2&&s.pin<14)Wn.push(nm(p)+' is analog but wired to D'+s.pin+'. Analog inputs are A0-A5');si.push({pin:s.pin,x:p.x+o,y:p.y,dig:p.v===2})}})});
+ if(!si.length)E.push('No IR sensor output is wired to an Arduino pin');
+ let u=null;if(us){if(N(us,'vcc')!==n5)E.push('Ultrasonic VCC must connect to 5V');if(N(us,'gnd')!==ng)E.push('Ultrasonic GND must connect to GND');const t=sg(us,'trig','Ultrasonic TRIG'),e=sg(us,'echo','Ultrasonic ECHO');if(t&&e&&t.pin!==undefined&&e.pin!==undefined)u={trig:t.pin,echo:e.pin,x:us.x,y:us.y}}
+ const Vb=[6,7.4,9,11.1][bat.v],sag=[1,1,.55,1][bat.v],f=cl((Vb-[2,.5][drv.v])/6,0,1.6)*sag;
+ if(Vb-[2,.5][drv.v]>7.5)Wn.push('Motors receive too much voltage and will run hot');if(bat.v===2)Wn.push('9V PP3 batteries sag under motor load, so the car will be slow');
+ const ay=(ms[0].y+ms[1].y)/2;
+ return{E,Wn,car:E.length?null:{ch,ms,si,us:u,f,ay,tw:Math.abs(ms[0].x-ms[1].x)||1,poly:P.map(p=>[p.x,p.y]),cz:{w:bb().x1-bb().x0,l:bb().y1-bb().y0},parts:JSON.parse(JSON.stringify(parts))}}}
+const sigNow=()=>JSON.stringify([parts,wires,ol]);
+function chk(){curV=val();const v=curV;$('#chk').innerHTML=v.E.map(m=>'<li class="bad">✕ '+m+'</li>').concat(v.Wn.map(m=>'<li class="warn">⚠ '+m+'</li>'),v.E.length?[]:['<li class="ok">✓ Circuit is valid. You can upload the car to the simulation.</li>']).join('');
+ $('#cs').textContent=!car?'Car not uploaded':carSig===sigNow()?'Car uploaded and up to date':'Car changed since upload. Upload again to test.'}
+function insp(){const p=parts.find(q=>q.id===sel),e=$('#insp');if(!p){e.innerHTML='<p class="m">Select a part on the chassis to edit it.</p>';return}
+ let h='<h3>'+nm(p)+'</h3>';const vs=PT[p.t][2];if(vs.length)h+='<label class="m">Type <select data-pv>'+vs.map((o,i)=>'<option value="'+i+'"'+(i===p.v?' selected':'')+'>'+o+'</option>').join('')+'</select></label>';
+ if(p.t==='mot')h+='<label class="m">Wheel diameter<output>'+p.d+' mm</output><input type="range" data-pk="d" min="40" max="90" value="'+p.d+'"></label><label class="m">Wheel thickness<output>'+p.w+' mm</output><input type="range" data-pk="w" min="8" max="30" value="'+p.w+'"></label><button class="b" data-copy>Copy wheel size to the other motor</button>';
+ if(p.t!=='mot')h+='<button class="b" data-rot>Rotate 90 degrees</button> ';e.innerHTML=h+'<button class="b" data-rm style="margin-top:.4rem">Remove part</button>'}
+function PRE(k){const q=a=>a.map(p=>({x:p[0],y:p[1],s:0})),o=[[160,130],[240,130],[270,160],[270,300],[240,330],[160,330],[130,300],[130,160]];return{rect:q([[130,130],[270,130],[270,330],[130,330]]),cham:q(o),round:q(o).map(p=>({...p,s:1})),wedge:q([[200,110],[270,200],[270,340],[130,340],[130,200]]),none:[]}[k]}
+let ol=PRE('rect'),omode='o',selV=-1;
+const ctl=i=>{const n=ol.length,a=ol[i],b=ol[(i+1)%n],p=ol[(i+n-1)%n],q=ol[(i+2)%n];return[a,a.s?{x:a.x+(b.x-p.x)/6,y:a.y+(b.y-p.y)/6}:a,b.s?{x:b.x-(q.x-a.x)/6,y:b.y-(q.y-a.y)/6}:b,b]};
+const opath=()=>{if(ol.length<2)return'';let d='M'+ol[0].x+' '+ol[0].y;ol.forEach((_,i)=>{const c=ctl(i);d+='C'+c[1].x+' '+c[1].y+' '+c[2].x+' '+c[2].y+' '+c[3].x+' '+c[3].y});return d+'Z'};
+const osamp=()=>{const o=[];if(ol.length<3)return o;ol.forEach((_,i)=>{const c=ctl(i);for(let k=0;k<10;k++){const t=k/10,u=1-t,f=(a,b,c2,d)=>u*u*u*a+3*u*u*t*b+3*u*t*t*c2+t*t*t*d;o.push({x:f(c[0].x,c[1].x,c[2].x,c[3].x),y:f(c[0].y,c[1].y,c[2].y,c[3].y),i})}});return o};
+const inside=(x,y,P)=>{let r=false;for(let i=0,j=P.length-1;i<P.length;j=i++)if((P[i].y>y)!==(P[j].y>y)&&x<(P[j].x-P[i].x)*(y-P[i].y)/(P[j].y-P[i].y)+P[i].x)r=!r;return r};
+const dseg=(x,y,a,b)=>{const dx=b.x-a.x,dy=b.y-a.y,t=cl(((x-a.x)*dx+(y-a.y)*dy)/(dx*dx+dy*dy||1),0,1);return Math.hypot(x-a.x-t*dx,y-a.y-t*dy)};
+const edist=(x,y,P)=>{let m=1e9,at=0;P.forEach((a,i)=>{const d=dseg(x,y,a,P[(i+1)%P.length]);if(d<m){m=d;at=a.i}});return[m,at]};
+const bb=()=>{const P=osamp();return P.length?{x0:Math.min(...P.map(p=>p.x)),x1:Math.max(...P.map(p=>p.x)),y0:Math.min(...P.map(p=>p.y)),y1:Math.max(...P.map(p=>p.y))}:{x0:130,x1:270,y0:130,y1:330}};
+function drawD(){const P=osamp(),s=['<defs><pattern id="gr" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M10 0H0V10" fill="none" stroke="var(--line)" stroke-width=".5"/></pattern></defs><rect width="400" height="460" fill="url(#gr)"/><line x1="200" y1="0" x2="200" y2="460" stroke="var(--muted)" stroke-dasharray="4 4" stroke-width=".7"/><line x1="20" y1="446" x2="70" y2="446" stroke="var(--ink)" stroke-width="2"/><text x="20" y="440" font-size="10" fill="var(--ink)">50 mm</text><text x="200" y="12" text-anchor="middle" font-size="10" fill="var(--muted)">FRONT</text>'];
+ if(ol.length>1)s.push('<path d="'+opath()+'" fill="var(--panel)" fill-opacity=".85" stroke="var(--cu)" stroke-width="2.5"/>');
+ parts.forEach(p=>{const[w,h]=sz(p),c={mcu:'#1b6ca8',drv:'#b33',bat:'#c80',mot:'#555',cas:'#888',ir:'#2a8',us:'#27a'}[p.t],o=p.id===sel?' stroke="var(--cu)" stroke-width="3"':' stroke="var(--line)"';let x='';
+  if(p.t==='mot'){const sd=p.x<200?-1:1;x='<rect x="'+(p.x+sd*(20+p.w/2)-p.w/2)+'" y="'+(p.y-p.d/2)+'" width="'+p.w+'" height="'+p.d+'" rx="3" fill="#222" stroke="#999"/>'}
+  s.push('<g data-id="'+p.id+'"'+(omode==='o'?' opacity=".4" pointer-events="none"':'')+'>'+x+'<rect x="'+(p.x-w/2)+'" y="'+(p.y-h/2)+'" width="'+w+'" height="'+h+'" rx="3" fill="'+c+'" fill-opacity=".8"'+o+'/><text x="'+p.x+'" y="'+(p.y+4)+'" text-anchor="middle" font-size="9" fill="#fff" pointer-events="none">'+({mcu:'UNO',drv:'DRIVER',bat:'BATT',mot:'M',cas:'',ir:p.v===1?'IR x5':'IR',us:'SONAR'}[p.t])+'</text></g>')});
+ if(omode==='o')ol.forEach((v,i)=>s.push('<circle data-v="'+i+'" cx="'+v.x+'" cy="'+v.y+'" r="6" fill="'+(i===selV?'var(--cu)':v.s?'var(--ok)':'#fff')+'" stroke="var(--ink)" style="cursor:move"/>'));
+ $('#dsg').innerHTML=s.join('')}
+function setMode(m){omode=m;$('#mo').setAttribute('aria-pressed',m==='o');$('#mp').setAttribute('aria-pressed',m==='p');$('#otool').classList.toggle('hid',m!=='o');
+ $('#hint').textContent=m==='o'?'Click to add outline points around your shape. Drag points to move them, click an edge to insert one. Select a point and press Curve to round it. The grid is 10 mm.':'Drag parts onto the chassis. Parts are drawn at their real size in millimetres. The dashed line is the car centreline.';drawD()}
+function drawW(){const cols=[10,300,590],ys=[10,10,10],pp={},s=[],pt=[];
+ parts.filter(p=>p.t!=='cas').forEach(p=>{const c=p.t==='mcu'?0:p.t==='bat'||p.t==='drv'?1:2,pl=pins(p),h=30+pl.length*17,x=cols[c],y=ys[c];ys[c]+=h+14;
+  s.push('<rect x="'+x+'" y="'+y+'" width="150" height="'+h+'" rx="6" fill="var(--panel)" stroke="var(--line)"/><text x="'+(x+75)+'" y="'+(y+18)+'" text-anchor="middle" font-weight="600" font-size="12" fill="var(--ink)">'+nm(p)+'</text>');
+  pl.forEach((q,i)=>{const py=y+34+i*17,px=q[1]==='r'?x+150:x;pp[p.id+':'+q[0]]=[px,py,q[1]];s.push('<text x="'+(q[1]==='r'?x+142:x+8)+'" y="'+(py+4)+'" text-anchor="'+(q[1]==='r'?'end':'start')+'" font-size="11" fill="var(--muted)">'+q[0]+'</text>')})});
+ const conn=new Set();wires.forEach((w,i)=>{const a=pp[w[0]],b=pp[w[1]];if(!a||!b)return;conn.add(w[0]);conn.add(w[1]);const n=w[0].split(':')[1]+w[1].split(':')[1],col=/5V|VCC/.test(n)?'#e33':/GND|-/.test(n)?'#889':/VIN|\+|12V|VM/.test(n)?'#f0a23b':'hsl('+(i*53%360)+' 75% 55%)',d1=a[2]==='r'?70:-70,d2=b[2]==='r'?70:-70,d='M'+a[0]+' '+a[1]+' C'+(a[0]+d1)+' '+a[1]+' '+(b[0]+d2)+' '+b[1]+' '+b[0]+' '+b[1];
+  s.push('<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="3" stroke-linecap="round"/><path d="'+d+'" fill="none" stroke="transparent" stroke-width="12" class="pin" data-wi="'+i+'"><title>Click to remove</title></path>')});
+ Object.keys(pp).forEach(k=>{const q=pp[k];s.push('<circle cx="'+q[0]+'" cy="'+q[1]+'" r="5" fill="'+(selPin===k?'var(--cu)':conn.has(k)?'var(--ok)':'var(--muted)')+'"/><circle class="pin" data-k="'+k+'" cx="'+q[0]+'" cy="'+q[1]+'" r="9" fill="transparent"><title>'+k.split(':')[1]+'</title></circle>')});
+ const H=Math.max(...ys)+10;$('#wsg').setAttribute('viewBox','0 0 750 '+H);$('#wsg').style.height=H+'px';$('#wsg').innerHTML=s.join('')}
+function rdr(){chk();drawD();drawW();insp()}
+function auto(){wires=[];const g=t=>parts.filter(p=>p.t===t).sort((a,b)=>a.x-b.x),m=g('mcu')[0],d=g('drv')[0],b=g('bat')[0];if(!m||!d||!b)return;
+ const pl=(p,r)=>pins(p).find(q=>q[2]===r)[0],rn=(p,x)=>pins(p).some(z=>z[2]===x)?pl(p,x):x,W=(p,r,q,n)=>wires.push([p.id+':'+rn(p,r),q.id+':'+rn(q,n)]);
+ W(b,'+',m,'VIN');W(b,'-',m,'GND');W(b,'+',d,'vm');W(b,'-',d,'gnd');if(d.v===1){W(m,'5V',d,'vcc');W(m,'5V',d,'stby')}
+ [['ea','D5'],['i1','D7'],['i2','D8'],['eb','D6'],['i3','D9'],['i4','D10']].forEach(a=>W(m,a[1],d,a[0]));
+ g('mot').forEach((o,i)=>{W(o,'m+',d,i?'o3':'o1');W(o,'m-',d,i?'o4':'o2')});
+ let k=0;g('ir').forEach(p=>{W(m,'5V',p,'vcc');W(m,'GND',p,'gnd');for(let c=0;c<(p.v===1?5:1);c++)W(m,'A'+k++,p,'out'+c)});
+ const u=g('us')[0];if(u){W(m,'5V',u,'vcc');W(m,'GND',u,'gnd');W(m,'D11',u,'trig');W(m,'D12',u,'echo')}}
+let drag=null;const svp=e=>{const s=$('#dsg'),q=s.createSVGPoint();q.x=e.clientX;q.y=e.clientY;return q.matrixTransform(s.getScreenCTM().inverse())};
+$('#dsg').addEventListener('pointerdown',e=>{const m0=svp(e);
+ if(omode==='o'){const v=e.target.dataset.v;if(v!==undefined){selV=+v;drag={v:+v};drawD();return}
+  const P=osamp(),r=P.length?edist(m0.x,m0.y,P):[1e9,0],pt={x:Math.round(m0.x/5)*5,y:Math.round(m0.y/5)*5,s:0};
+  if(r[0]<6){ol.splice(r[1]+1,0,pt);selV=r[1]+1}else{ol.push(pt);selV=ol.length-1}drag={v:selV};rdr();return}
+ const gg=e.target.closest('[data-id]');if(!gg)return;sel=gg.dataset.id;const p=parts.find(q=>q.id===sel),m=svp(e);drag={p,dx:p.x-m.x,dy:p.y-m.y};insp();drawD()});
+addEventListener('pointermove',e=>{if(!drag)return;const m=svp(e);if(drag.v!==undefined){ol[drag.v].x=cl(Math.round(m.x/5)*5,10,390);ol[drag.v].y=cl(Math.round(m.y/5)*5,20,445);drawD();return}drag.p.x=cl(Math.round(m.x+drag.dx),20,380);drag.p.y=cl(Math.round(m.y+drag.dy),30,440);drawD()});
+addEventListener('pointerup',()=>{if(drag){drag=null;rdr()}});
+$('#pal').addEventListener('click',e=>{const t=e.target.dataset.t;if(t){add(t);rdr()}});
+$('#qs').onclick=()=>{parts=[];wires=[];['mcu','drv','bat','mot','mot','cas','ir','ir','ir'].forEach(add);sel=null;rdr()};
+$('#cp').onclick=()=>{parts=[];wires=[];sel=null;rdr()};$('#mo').onclick=()=>setMode('o');$('#mp').onclick=()=>setMode('p');
+$('#otool').addEventListener('click',e=>{const k=e.target.dataset.pre;if(k){ol=PRE(k);selV=-1}else if(e.target.id==='vc'&&selV>=0)ol[selV].s^=1;else if(e.target.id==='vd'&&selV>=0){ol.splice(selV,1);selV=-1}rdr()});
+$('#insp').addEventListener('change',e=>{const p=parts.find(q=>q.id===sel);if(p&&e.target.dataset.pv!==undefined){p.v=+e.target.value;wires=wires.filter(w=>!w[0].startsWith(p.id+':')&&!w[1].startsWith(p.id+':'));rdr()}});
+$('#insp').addEventListener('input',e=>{const p=parts.find(q=>q.id===sel),k=e.target.dataset.pk;if(p&&k){p[k]=+e.target.value;e.target.previousElementSibling.textContent=p[k]+' mm';drawD();chk()}});
+$('#insp').addEventListener('click',e=>{const p=parts.find(q=>q.id===sel);if(!p)return;
+ if(e.target.dataset.rot!==undefined)p.r=p.r?0:1;if(e.target.dataset.copy!==undefined)parts.filter(q=>q.t==='mot'&&q!==p).forEach(q=>{q.d=p.d;q.w=p.w});
+ if(e.target.dataset.rm!==undefined){parts=parts.filter(q=>q!==p);wires=wires.filter(w=>!w[0].startsWith(p.id+':')&&!w[1].startsWith(p.id+':'));sel=null}rdr()});
+$('#wsg').addEventListener('click',e=>{const t=e.target,wi=t.dataset.wi,k=t.dataset.k;if(wi!==undefined){wires.splice(+wi,1);rdr();return}if(!k)return;
+ if(!selPin)selPin=k;else if(selPin===k)selPin=null;else{if(!wires.some(w=>(w[0]===selPin&&w[1]===k)||(w[0]===k&&w[1]===selPin)))wires.push([selPin,k]);selPin=null;chk()}drawW()});
+$('#auto').onclick=()=>{auto();rdr()};$('#nw').onclick=()=>{wires=[];rdr()};
+function step(s){stepV=s;document.querySelectorAll('[data-s]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.s===s));$('#sd').classList.toggle('hid',s!=='d');$('#sw').classList.toggle('hid',s!=='w');$('#su').classList.toggle('hid',s!=='u');if(s==='w')drawW()}
+document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>step(b.dataset.s));
+$('#ucar').onclick=()=>{const v=val();chk();if(v.E.length){$('#cs').textContent='Fix '+v.E.length+' problem(s) before uploading';$('#cs').className='bad';return}car=v.car;carSig=sigNow();reset();$('#cs').className='m';chk();step('u');$('#st').textContent='Car uploaded. Now upload your sketch and press Run.';$('#st').className='st ok'};
+/* --- track and robot physics --- */
+const S=5,LW=7,W0=900,H0=462,OB={x:395,y:21,w:24,h:24};
+/* Track centre line, traced from the competition map (pixels on a 900 x 462 canvas). It is a single closed loop that crosses itself at (195,150).
+   Edit this list to reshape the track. */
+const TP=[[775,33],[700,33],[600,33],[500,33],[400,33],[320,33],[262,36],[225,55],[200,85],[195,130],[195,200],[195,290],[195,355],[180,405],[145,435],[100,440],[60,436],[30,415],[20,375],[20,300],[20,200],[20,110],[28,65],[55,32],[95,28],[128,52],[141,95],[158,130],[195,150],[235,158],[266,184],[280,228],[284,272],[302,305],[343,314],[382,302],[405,268],[415,236],[437,208],[470,202],[500,222],[512,258],[516,292],[522,322],[500,344],[460,348],[410,346],[378,362],[365,396],[385,428],[430,442],[520,442],[610,442],[670,436],[698,405],[700,365],[672,333],[642,314],[626,288],[606,248],[556,208],[502,166],[490,128],[508,98],[545,92],[620,92],[690,92],[724,108],[735,140],[735,200],[735,270],[735,330],[738,380],[762,420],[810,438],[855,420],[878,375],[884,310],[870,255],[832,224],[796,192],[800,156],[845,136],[870,100],[860,58],[830,35]];
+const TS=[],GR={},TG=16;let TL=0;
+(function(){const n=TP.length,P=TP.map(p=>({x:p[0],y:p[1]})),dd=(a,b)=>Math.hypot(b.x-a.x,b.y-a.y);
+ for(let i=0;i<n;i++){const p0=P[(i+n-1)%n],p1=P[i],p2=P[(i+1)%n],p3=P[(i+2)%n],t0=0,t1=Math.sqrt(dd(p0,p1)),t2=t1+Math.sqrt(dd(p1,p2)),t3=t2+Math.sqrt(dd(p2,p3)),L=dd(p1,p2),m=Math.max(1,Math.ceil(L/2));TL+=L;
+  for(let k=0;k<m;k++){const t=t1+(t2-t1)*k/m,mx=(a,b,ta,tb)=>({x:(tb-t)/(tb-ta)*a.x+(t-ta)/(tb-ta)*b.x,y:(tb-t)/(tb-ta)*a.y+(t-ta)/(tb-ta)*b.y}),
+   A1=mx(p0,p1,t0,t1),A2=mx(p1,p2,t1,t2),A3=mx(p2,p3,t2,t3),B1=mx(A1,A2,t0,t2),B2=mx(A2,A3,t1,t3),C=mx(B1,B2,t1,t2);TS.push({x:C.x,y:C.y,g:0})}}
+ /* dashed section on the vertical line in Zone 4: 20 px dash, 20 px gap */
+ TS.forEach(s=>{if(Math.abs(s.x-735)<5&&s.y>165&&s.y<325&&Math.floor((s.y-165)/20)%2===1)s.g=1});
+ TS.forEach(s=>{const k=(Math.floor(s.x/TG)+10)*1000+Math.floor(s.y/TG)+10;(GR[k]=GR[k]||[]).push(s)})})();
+const START=TS[0],R0=()=>({x:START.x,y:START.y,th:Math.PI,idx:0,cum:0,lap:0,ls:0,laps:[],lost:0,hit:0});
+let R=R0();
+const dist=(x,y,g)=>{const a0=Math.floor(x/TG),b0=Math.floor(y/TG);let m=99;for(let i=-3;i<=3;i++)for(let j=-3;j<=3;j++){const a=GR[(a0+i+10)*1000+b0+j+10];if(a)for(let q=0;q<a.length;q++){const s=a[q];if(s.g&&!g)continue;const d=Math.hypot(s.x-x,s.y-y);if(d<m)m=d}}return m};
+const wp=(px,py)=>{const c=Math.cos(R.th),s=Math.sin(R.th),f=(car.ay-py)/S,l=(px-200)/S;return[R.x+c*f-s*l,R.y+s*f+c*l]};
+const sense=s=>{const on=dist(...wp(s.x,s.y))<LW/2;return s.dig?(on?1023:0):(on?880:120)+Math.random()*30};
+const obsOn=()=>$('#obs').checked;
+function usDist(){const u=car.us,p=wp(u.x,u.y),c=Math.cos(R.th),s=Math.sin(R.th);if(!obsOn())return 4000;for(let d=20;d<4000;d+=10){const x=p[0]+c*d/S,y=p[1]+s*d/S;if(x>OB.x&&x<OB.x+OB.w&&y>OB.y&&y<OB.y+OB.h)return d}return 4000}
+function phys(){const c=car,sv=s=>s.c!==undefined?s.c*255:out[s.pin];let vl=0,vr=0,gw=0;
+ c.ms.forEach(m=>{const h=c.ch[m.ch],v=((sv(h.i1)>127?1:0)-(sv(h.i2)>127?1:0))*m.pol*(sv(h.en)/255)*c.f*(m.d/65)*160;if(m.x<200)vl=v;else vr=v;gw+=m.w/2});
+ let v=(vl+vr)/2;if(obsOn()){const dx=Math.max(OB.x-R.x,0,R.x-OB.x-OB.w),dy=Math.max(OB.y-R.y,0,R.y-OB.y-OB.h);if(Math.hypot(dx,dy)<c.cz.l/(2*S)&&v>0){v=0;if(!R.hit){R.hit=1;log('Collision with the obstacle')}}}
+ R.th+=(vl-vr)/(c.tw/S)*cl(.55+.45*gw/30,.5,1)*.001;R.x+=Math.cos(R.th)*v*.001;R.y+=Math.sin(R.th)*v*.001;
+ const N=TS.length;let bi=R.idx,bd=1e9;for(let k=-40;k<=40;k++){const j=(R.idx+k+N)%N,d=Math.hypot(TS[j].x-R.x,TS[j].y-R.y);if(d<bd){bd=d;bi=j}}
+ if(bd<60){let dl=bi-R.idx;if(dl>N/2)dl-=N;if(dl<-N/2)dl+=N;R.cum+=dl*(TL/N);R.idx=bi}
+ const n=Math.floor(Math.max(R.cum,0)/TL);if(n>R.lap){R.lap=n;R.laps.push((T-R.ls)/1000);R.ls=T;log('Lap '+n+' complete in '+R.laps[R.laps.length-1].toFixed(2)+' s')}
+ R.lost=dist(R.x,R.y,1)>40?R.lost+1:0;if(R.lost>3000)stop('Lost the line. Press Reset, then fix the code or the design.')}
+const trk=$('#trk'),cx=trk.getContext('2d'),TB=document.createElement('canvas');TB.width=W0;TB.height=H0;
+(function(){const g=TB.getContext('2d');g.fillStyle='#f4f7f5';g.fillRect(0,0,W0,H0);
+ const disc=(x,y,r,f,t)=>{g.fillStyle=f;g.beginPath();g.arc(x,y,r,0,7);g.fill();g.strokeStyle='#8aa';g.lineWidth=1.5;g.stroke();g.fillStyle='#223';g.font='700 11px sans-serif';g.textAlign='center';t.split('|').forEach((l,i,a)=>g.fillText(l,x,y+4+(i-(a.length-1)/2)*13))},
+ lab=(t,x,y,sz)=>{g.fillStyle='#555';g.font='700 '+sz+'px sans-serif';g.textAlign='center';g.fillText(t,x,y)},
+ arr=(n,x1,y1,x2,y2)=>{g.strokeStyle='#e33';g.fillStyle='#e33';g.lineWidth=3;g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.stroke();const a=Math.atan2(y2-y1,x2-x1);g.beginPath();g.moveTo(x2,y2);g.lineTo(x2-10*Math.cos(a-.5),y2-10*Math.sin(a-.5));g.lineTo(x2-10*Math.cos(a+.5),y2-10*Math.sin(a+.5));g.fill();g.fillStyle='#fff';g.beginPath();g.arc(x1,y1,12,0,7);g.fill();g.stroke();g.fillStyle='#e33';g.font='700 15px sans-serif';g.fillText(n,x1,y1+5)};
+ disc(75,80,34,'#d9a21b','EMBLEM');disc(350,150,42,'#bfe0f5','BENDS|OF DEVIL');disc(440,85,38,'#bfe0f5','FREE AS|WIND');disc(672,205,42,'#cfe8c4','LAND OF|CROCODILES');disc(95,250,42,'#cfe0c4','AKBAR|BRIDGE');
+ lab('ZONE 1',450,18,16);lab('ZONE 2',105,318,16);lab('ZONE 3',462,262,16);lab('ZONE 4',690,282,16);lab('DEEP SPEED',535,398,18);
+ arr(1,775,112,775,52);arr(2,262,92,206,92);arr(3,222,215,222,160);arr(4,547,172,547,102);
+ g.strokeStyle='#111';g.lineWidth=LW;g.lineJoin='round';g.beginPath();let pen=false;TS.forEach(s=>{if(s.g){pen=false;return}if(!pen){g.moveTo(s.x,s.y);pen=true}else g.lineTo(s.x,s.y)});g.lineTo(TS[0].x,TS[0].y);g.stroke();
+ g.strokeStyle='#e33';g.lineWidth=3;g.beginPath();g.moveTo(START.x,START.y-16);g.lineTo(START.x,START.y+16);g.stroke();lab('START / FINISH',START.x+50,14,11)})();
+function drawT(){cx.drawImage(TB,0,0);if(obsOn()){cx.fillStyle='#e07b00';cx.fillRect(OB.x,OB.y,OB.w,OB.h)}
+ if(!car){cx.fillStyle='#667';cx.font='14px sans-serif';cx.textAlign='left';cx.fillText('Upload your car to the simulation to run it',10,455);return}
+ const poly=(q,f)=>{cx.fillStyle=f;cx.beginPath();q.forEach((a,i)=>{const p=wp(a[0],a[1]);i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1])});cx.fill()},rc=(x,y,w,h,f)=>poly([[x-w/2,y-h/2],[x+w/2,y-h/2],[x+w/2,y+h/2],[x-w/2,y+h/2]],f);
+ poly(car.poly,'#cfd8dc');const ty=Math.min(...car.poly.map(q=>q[1]));poly([[190,ty+9],[200,ty],[210,ty+9]],'#ffd21f');
+ car.parts.forEach(p=>{const[w,h]=sz(p);if(p.t==='mot')rc(p.x+(p.x<200?-1:1)*(20+p.w/2),p.y,p.w,p.d,'#222');rc(p.x,p.y,w,h,{mcu:'#1b6ca8',drv:'#b33',bat:'#c80',mot:'#555',cas:'#888',ir:'#2a8',us:'#27a'}[p.t])});
+ car.si.forEach(s=>{const p=wp(s.x,s.y);cx.fillStyle=dist(p[0],p[1])<LW/2?'#f33':'#bbb';cx.beginPath();cx.arc(p[0],p[1],2.5,0,7);cx.fill()});
+ const bl=R.laps.length?Math.min(...R.laps).toFixed(2)+' s':'-';$('#lapInfo').textContent='Laps: '+R.lap+'   Best lap: '+bl+'   Speed factor: '+car.f.toFixed(2)+(R.lost>0?'   Off the line...':'')}
+/* --- scheduler --- */
+function stop(m){run=false;$('#run').textContent='Run';if(m){$('#st').textContent=m;$('#st').className='st bad';log(m)}}
+function* main(p){yield* p.setup();while(true){yield* p.loop();yield 1}}
+function tick(n){for(let i=0;i<n&&run;i++){T++;guard=0;
+  if(T>=wake){try{const r=gen.next();if(r.done){stop('Program ended.');break}wake=T+(r.value|0)}catch(e){stop('Runtime error: '+err(e));break}}
+  if(tab==='r'&&car)phys()}}
+function reset(msg){run=false;T=0;wake=0;gen=null;out.fill(0);md={};lastHigh={};sv={};R=R0();buf='';cc.forEach(c=>{c.burnt=false;c.a=0;c.ang=90});$('#run').textContent='Run';if(msg!==false){lines=[];$('#con').textContent='';$('#st').textContent='Reset.';$('#st').className='st'}}
+$('#up').onclick=()=>{try{compiled=compile($('#code').value);up=true;$('#st').textContent='Uploaded successfully. Press Run.';$('#st').className='st ok'}catch(e){compiled=null;up=false;$('#st').textContent='Compile error: '+err(e);$('#st').className='st bad'}chk()};
+$('#run').onclick=()=>{if(run){run=false;$('#run').textContent='Run';$('#st').textContent='Paused.';return}
+ if(!compiled){$('#st').textContent='Upload your sketch first.';$('#st').className='st bad';return}
+ if(tab==='r'&&!car){$('#st').textContent='Upload your car to the simulation first.';$('#st').className='st bad';return}
+ if(!gen){try{gen=main(compiled(api,guardFn))}catch(e){stop('Runtime error: '+err(e));return}}
+ run=true;$('#run').textContent='Pause';$('#st').textContent='Running...';$('#st').className='st ok'};
+$('#rs').onclick=()=>reset();
+function frame(now){const dt=Math.min(now-last,50);last=now;if(run)tick(Math.round(dt*(+$('#rt').value)));if(tab==='c')ucard();else if(stepV==='u')drawT();requestAnimationFrame(frame)}
+/* --- examples and tabs --- */
+const EX={c:{'Blink an LED':`// Blink the LED on pin 13
+const int LED = 13;
+
+void setup() {
+  pinMode(LED, OUTPUT);
+  Serial.begin(9600);
+}
+
+void loop() {
+  digitalWrite(LED, HIGH);
+  Serial.println("LED on");
+  delay(500);
+  digitalWrite(LED, LOW);
+  delay(500);
+}`,'Button controls LED':`// Hold the button on D2 to light the LED on D13
+void setup() {
+  pinMode(13, OUTPUT);
+  pinMode(2, INPUT_PULLUP);
+}
+
+void loop() {
+  if (digitalRead(2) == LOW) {
+    digitalWrite(13, HIGH);
+  } else {
+    digitalWrite(13, LOW);
+  }
+}`,'Servo sweep':`// Add a servo on D9
+#include <Servo.h>
+Servo arm;
+
+void setup() {
+  arm.attach(9);
+}
+
+void loop() {
+  for (int a = 0; a <= 180; a += 5) { arm.write(a); delay(30); }
+  for (int a = 180; a >= 0; a -= 5) { arm.write(a); delay(30); }
+}`,'Ultrasonic distance warning':`// Add an ultrasonic sensor: TRIG D11, ECHO D12. The LED is on D13.
+void setup() {
+  pinMode(11, OUTPUT);
+  pinMode(12, INPUT);
+  pinMode(13, OUTPUT);
+  Serial.begin(9600);
+}
+
+long readCm() {
+  digitalWrite(11, LOW);  delayMicroseconds(2);
+  digitalWrite(11, HIGH); delayMicroseconds(10);
+  digitalWrite(11, LOW);
+  long us = pulseIn(12, HIGH);
+  return us * 0.0343 / 2;
+}
+
+void loop() {
+  long cm = readCm();
+  Serial.println(cm);
+  digitalWrite(13, cm < 30);
+  delay(100);
+}`,'IR sensor surface detector':`// Add an IR sensor on A1. The LED is on D13.
+void setup() {
+  pinMode(13, OUTPUT);
+  Serial.begin(9600);
+}
+
+void loop() {
+  int v = analogRead(A1);
+  Serial.println(v);
+  digitalWrite(13, v > 500);
+  delay(100);
+}`,'Potentiometer controls a DC motor':`// Add a potentiometer on A0 and a DC motor: IN1 D7, IN2 D8, EN D5
+void setup() {
+  pinMode(7, OUTPUT); pinMode(8, OUTPUT); pinMode(5, OUTPUT);
+}
+
+void loop() {
+  int speed = map(analogRead(A0), 0, 1023, -255, 255);
+  digitalWrite(7, speed > 0);
+  digitalWrite(8, speed < 0);
+  analogWrite(5, abs(speed));
+  delay(20);
+}`,'Potentiometer dimmer':`// Potentiometer on A0 dims the LED on pin 3 (add a pot and move the LED to D3)
+void setup() {
+  pinMode(3, OUTPUT);
+  Serial.begin(9600);
+}
+
+void loop() {
+  int value = analogRead(A0);
+  int brightness = map(value, 0, 1023, 0, 255);
+  analogWrite(3, brightness);
+  Serial.println(value);
+  delay(100);
+}`},r:{'Line follower (3 sensors)':`#define ENA 5
+#define IN1 7
+#define IN2 8
+#define ENB 6
+#define IN3 9
+#define IN4 10
+#define S_LEFT A0
+#define S_MID A1
+#define S_RIGHT A2
+
+int baseSpeed = 150;
+int lastTurn = 0;
+unsigned long lastSeen = 0;
+
+void setup() {
+  pinMode(ENA, OUTPUT); pinMode(ENB, OUTPUT);
+  pinMode(IN1, OUTPUT); pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT); pinMode(IN4, OUTPUT);
+}
+
+void drive(int left, int right) {
+  digitalWrite(IN1, left >= 0);  digitalWrite(IN2, left < 0);
+  digitalWrite(IN3, right >= 0); digitalWrite(IN4, right < 0);
+  analogWrite(ENA, abs(left));
+  analogWrite(ENB, abs(right));
+}
+
+void loop() {
+  bool l = analogRead(S_LEFT) > 500;
+  bool m = analogRead(S_MID) > 500;
+  bool r = analogRead(S_RIGHT) > 500;
+  if (l || m || r) { lastSeen = millis(); }
+
+  if (l && m && r) { drive(baseSpeed, baseSpeed); }  // crossing: keep straight
+  else if (l) { drive(-60, baseSpeed); lastTurn = -1; }
+  else if (r) { drive(baseSpeed, -60); lastTurn = 1; }
+  else if (m) { drive(baseSpeed, baseSpeed); }
+  else if (millis() - lastSeen < 600) { drive(baseSpeed, baseSpeed); }  // gap in the line: keep going straight
+  else if (lastTurn < 0) { drive(-60, baseSpeed); }
+  else { drive(baseSpeed, -60); }
+}`,'5-sensor array, proportional control':`// Needs the 5-channel IR array on A0 to A4
+#define ENA 5
+#define IN1 7
+#define IN2 8
+#define ENB 6
+#define IN3 9
+#define IN4 10
+
+int baseSpeed = 140;
+int lastError = 0;
+unsigned long lastSeen = 0;
+
+void setup() {
+  pinMode(ENA, OUTPUT); pinMode(ENB, OUTPUT);
+  pinMode(IN1, OUTPUT); pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT); pinMode(IN4, OUTPUT);
+}
+
+void drive(int left, int right) {
+  left = constrain(left, -255, 255);
+  right = constrain(right, -255, 255);
+  digitalWrite(IN1, left >= 0);  digitalWrite(IN2, left < 0);
+  digitalWrite(IN3, right >= 0); digitalWrite(IN4, right < 0);
+  analogWrite(ENA, abs(left));
+  analogWrite(ENB, abs(right));
+}
+
+void loop() {
+  int sum = 0;
+  int count = 0;
+  for (int i = 0; i < 5; i++) {
+    if (analogRead(A0 + i) > 500) { sum += (i - 2); count++; }
+  }
+  if (count > 0) { lastError = sum * 100 / count; lastSeen = millis(); }
+  int e = lastError;
+  if (count == 0 && millis() - lastSeen < 600) { e = 0; }  // gap in the line: keep going straight
+  int turn = e * 0.6;
+  drive(baseSpeed + turn, baseSpeed - turn);
+}`,'Line follower with obstacle stop':`// Needs the ultrasonic sensor: TRIG on D11, ECHO on D12
+#define ENA 5
+#define IN1 7
+#define IN2 8
+#define ENB 6
+#define IN3 9
+#define IN4 10
+#define TRIG 11
+#define ECHO 12
+
+int baseSpeed = 150;
+int lastTurn = 0;
+unsigned long lastSeen = 0;
+
+void setup() {
+  pinMode(ENA, OUTPUT); pinMode(ENB, OUTPUT);
+  pinMode(IN1, OUTPUT); pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT); pinMode(IN4, OUTPUT);
+  pinMode(TRIG, OUTPUT); pinMode(ECHO, INPUT);
+  Serial.begin(9600);
+}
+
+void drive(int left, int right) {
+  digitalWrite(IN1, left >= 0);  digitalWrite(IN2, left < 0);
+  digitalWrite(IN3, right >= 0); digitalWrite(IN4, right < 0);
+  analogWrite(ENA, abs(left));
+  analogWrite(ENB, abs(right));
+}
+
+int distanceMm() {
+  digitalWrite(TRIG, LOW);  delayMicroseconds(2);
+  digitalWrite(TRIG, HIGH); delayMicroseconds(10);
+  digitalWrite(TRIG, LOW);
+  long us = pulseIn(ECHO, HIGH);
+  if (us == 0) { return 4000; }
+  return us * 0.343 / 2;
+}
+
+void loop() {
+  int d = distanceMm();
+  if (d < 200) {
+    drive(0, 0);
+    Serial.println("Obstacle ahead, stopping");
+    delay(200);
+    return;
+  }
+  bool l = analogRead(A0) > 500;
+  bool m = analogRead(A1) > 500;
+  bool r = analogRead(A2) > 500;
+  if (l || m || r) { lastSeen = millis(); }
+  if (l && m && r) { drive(baseSpeed, baseSpeed); }  // crossing: keep straight
+  else if (l) { drive(-60, baseSpeed); lastTurn = -1; }
+  else if (r) { drive(baseSpeed, -60); lastTurn = 1; }
+  else if (m) { drive(baseSpeed, baseSpeed); }
+  else if (millis() - lastSeen < 600) { drive(baseSpeed, baseSpeed); }  // gap in the line: keep going straight
+  else if (lastTurn < 0) { drive(-60, baseSpeed); }
+  else { drive(baseSpeed, -60); }
+}`}};
+function loadEx(){const k=$('#ex').value;$('#code').value=EX[tab][k];compiled=null;up=false;reset();chk()}
+function setTab(t){tab=t;$('#tC').setAttribute('aria-pressed',t==='c');$('#tR').setAttribute('aria-pressed',t==='r');$('#pc').classList.toggle('hid',t!=='c');$('#pr').classList.toggle('hid',t!=='r');
+ $('#ex').innerHTML=Object.keys(EX[t]).map(k=>'<option>'+k+'</option>').join('');loadEx()}
+$('#ex').onchange=loadEx;$('#tC').onclick=()=>setTab('c');$('#tR').onclick=()=>setTab('r');
+$('#code').addEventListener('input',()=>{up=false;compiled=null;gen=null;chk()});
+$('#code').addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();const t=e.target,s=t.selectionStart;t.value=t.value.slice(0,s)+'  '+t.value.slice(t.selectionEnd);t.selectionStart=t.selectionEnd=s+2}});
+cards();setMode('o');rdr();setTab('c');requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
