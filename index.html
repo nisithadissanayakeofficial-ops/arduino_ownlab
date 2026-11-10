@@ -43,12 +43,21 @@ footer{padding:1.5rem 0;color:var(--muted);font-size:.85rem}
 #dsg,#wsg{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:4px;touch-action:none}#wsg{min-width:760px}
 #dsg{user-select:none;-webkit-user-select:none}#dsg [data-id]{cursor:grab}.pin{cursor:pointer}#chk{max-height:9rem;overflow:auto}
 label input[type=range]{display:block}output{color:var(--cu);margin-left:.4rem}
+.learn{display:grid;grid-template-columns:230px 1fr;gap:1.2rem}@media(max-width:800px){.learn{grid-template-columns:1fr}}
+#ltl h3{font:600 .85rem var(--b);color:var(--muted);margin:.9rem 0 .35rem}#ltl h3:first-child{margin-top:0}#ltl button{display:block;width:100%;text-align:left;margin-bottom:.35rem}
+.ldemo svg{width:100%;max-width:640px;background:var(--bg);border:1px solid var(--line);border-radius:6px;display:block;margin-bottom:.6rem}
+.key{background:var(--bg);border-left:4px solid var(--cu);padding:.6rem .9rem;margin:1rem 0;border-radius:0 6px 6px 0}
+#lart h2{margin-bottom:.4rem}
 </style>
 </head>
 <body>
 <header><div class="w"><div><h1>VoltBench</h1><p>Build an Arduino circuit, write the C++ sketch, upload it and watch it run. Then assemble a line follower robot and program it around a track.</p></div>
-<div class="tabs" role="tablist"><button class="b" id="tC" role="tab" aria-pressed="true">Circuit lab</button><button class="b" id="tR" role="tab" aria-pressed="false">Line follower</button></div></div></header>
+<div class="tabs" role="tablist"><button class="b" id="tL" role="tab" aria-pressed="true">Learn</button><button class="b" id="tC" role="tab" aria-pressed="true">Circuit lab</button><button class="b" id="tR" role="tab" aria-pressed="false">Line follower</button></div></div></header>
 <main class="w">
+<section id="lp" aria-label="Learn">
+ <div class="card" style="margin:1rem 0"><h2>Learn the parts</h2><p class="m">Pick a topic. Each one opens a live demo that starts on its own, so you can see how sensors, motors, line following and maze solving work. Then jump straight into the matching lab.</p>
+ <div class="learn"><nav id="ltl" aria-label="Topics"></nav><article id="lart" aria-live="polite"></article></div></div>
+</section>
 <section id="pc" aria-label="Circuit lab breadboard">
  <div class="card" style="margin:1rem 0"><h2>Breadboard workbench</h2>
  <p class="m">1. Pick a part, then click a breadboard hole to place it. 2. Pick a wire colour, click one point, then another to connect them. Click a wire to remove it. 3. Power the Arduino from the battery (battery + to VIN, battery - to GND) and feed the breadboard rails from the 5V and GND pins. 4. Upload your sketch and run it.</p>
@@ -76,11 +85,11 @@ label input[type=range]{display:block}output{color:var(--cu);margin-left:.4rem}
   <div class="card"><h2>Test conditions</h2><label class="row"><input type="checkbox" id="obs"> Place an obstacle on the track</label><p class="m">Write your sketch below, press Upload, then Run. If the car misbehaves, go back and fix the wiring or the design, then upload the car again.</p></div>
   <div class="card"><h2>Track obstacles</h2><p class="m">Add, move or remove obstacles, then press Reset and Run. The car has to be built to cope: tyres, ballast and stance all change the result.</p><div class="row"><button class="b" data-ob="bridge">+ Akbar bridge</button><button class="b" data-ob="mud">+ Mud patch</button><button class="b" data-ob="slick">+ Slippery patch</button></div><div id="oblist"></div></div></div>
 </section>
-<section class="card" style="margin-bottom:1rem"><div class="row" style="justify-content:space-between"><div class="row"><label for="ex" class="m">Example sketch</label><select id="ex"></select></div>
+<section class="card" id="tb" style="margin-bottom:1rem"><div class="row" style="justify-content:space-between"><div class="row"><label for="ex" class="m">Example sketch</label><select id="ex"></select></div>
  <div class="row"><button class="b" id="up">Upload</button><button class="b pri" id="run">Run</button><button class="b" id="rs">Reset</button><button class="b" id="cclr">Clear console</button><button class="b" id="ccopy">Copy code</button>
  <select id="rt" aria-label="Simulation speed"><option value="1">1x</option><option value="4" selected>4x</option><option value="10">10x</option></select></div></div>
  <div class="st" id="st" role="status" style="margin-top:.5rem"></div></section>
-<section class="ide"><div><textarea id="code" spellcheck="false" aria-label="Arduino C++ sketch"></textarea></div><pre id="con" aria-live="polite" aria-label="Serial monitor"></pre></section>
+<section class="ide" id="ide"><div><textarea id="code" spellcheck="false" aria-label="Arduino C++ sketch"></textarea></div><pre id="con" aria-live="polite" aria-label="Serial monitor"></pre></section>
 </main>
 <footer><div class="w">VoltBench runs your sketch in a simplified simulator: a subset of Arduino C++ translated to JavaScript. Integer division is not truncated, and arrays and Strings are not supported. Not a replacement for real hardware testing.</div></footer>
 <script>
@@ -440,7 +449,7 @@ $('#run').onclick=()=>{if(run){run=false;$('#run').textContent='Run';$('#st').te
  if(!gen){try{gen=main(compiled(api,guardFn))}catch(e){stop('Runtime error: '+err(e));return}}
  run=true;$('#run').textContent='Pause';$('#st').textContent='Running...';$('#st').className='st ok'};
 $('#rs').onclick=()=>reset();
-function frame(now){const dt=Math.min(now-last,50);last=now;if(run)tick(Math.round(dt*(+$('#rt').value)));if(tab==='c')animB();else if(stepV==='u')drawT();requestAnimationFrame(frame)}
+function frame(now){const dt=Math.min(now-last,50);last=now;if(run)tick(Math.round(dt*(+$('#rt').value)));if(tab==='c')animB();else if(stepV==='u')drawT();if(view==='l'&&LT)LT(now);requestAnimationFrame(frame)}
 /* --- examples and tabs --- */
 const EX={c:{'Blink an LED':`// Blink the LED on pin 13
 const int LED = 13;
@@ -599,6 +608,65 @@ void loop() {
   else if (millis() - lastSeen < 600) { drive(baseSpeed, baseSpeed); }  // gap in the line: keep going straight
   else if (lastTurn < 0) { drive(-60, baseSpeed); }
   else { drive(baseSpeed, -60); }
+}`,'Auto-calibrating line follower (3 sensors)':`#define ENA 5
+#define IN1 7
+#define IN2 8
+#define ENB 6
+#define IN3 9
+#define IN4 10
+#define S_LEFT A0
+#define S_MID A1
+#define S_RIGHT A2
+
+int baseSpeed = 150;
+int lastTurn = 0;
+int lo = 1023;
+int hi = 0;
+int thr = 500;
+unsigned long lastSeen = 0;
+
+void setup() {
+  pinMode(ENA, OUTPUT); pinMode(ENB, OUTPUT);
+  pinMode(IN1, OUTPUT); pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT); pinMode(IN4, OUTPUT);
+  calibrate();
+}
+
+void drive(int left, int right) {
+  digitalWrite(IN1, left >= 0);  digitalWrite(IN2, left < 0);
+  digitalWrite(IN3, right >= 0); digitalWrite(IN4, right < 0);
+  analogWrite(ENA, abs(left));
+  analogWrite(ENB, abs(right));
+}
+
+void calibrate() {
+  // Spin once on the spot so the middle sensor crosses the line
+  unsigned long t0 = millis();
+  drive(110, -110);
+  while (millis() - t0 < 2000) {
+    int v = analogRead(S_MID);
+    if (v < lo) { lo = v; }
+    if (v > hi) { hi = v; }
+    delay(5);
+  }
+  drive(0, 0);
+  thr = (lo + hi) / 2;
+  Serial.println(thr);
+}
+
+void loop() {
+  bool l = analogRead(S_LEFT) > thr;
+  bool m = analogRead(S_MID) > thr;
+  bool r = analogRead(S_RIGHT) > thr;
+  if (l || m || r) { lastSeen = millis(); }
+
+  if (l && m && r) { drive(baseSpeed, baseSpeed); }  // crossing: keep straight
+  else if (l) { drive(-60, baseSpeed); lastTurn = -1; }
+  else if (r) { drive(baseSpeed, -60); lastTurn = 1; }
+  else if (m) { drive(baseSpeed, baseSpeed); }
+  else if (millis() - lastSeen < 600) { drive(baseSpeed, baseSpeed); }  // gap in the line: keep going straight
+  else if (lastTurn < 0) { drive(-60, baseSpeed); }
+  else { drive(baseSpeed, -60); }
 }`,'ESP32 line follower':`// ESP32 DevKit: wire the driver and sensors to these GPIO pins
 #define ENA 25
 #define IN1 26
@@ -737,36 +805,191 @@ void loop() {
   else { drive(baseSpeed, -60); }
 }`}};
 function loadEx(){const k=$('#ex').value;$('#code').value=EX[tab][k];compiled=null;up=false;reset();chk()}
-function setTab(t){tab=t;BRD=t==='c'?B.board:(car&&car.esp?'esp32':'uno');$('#tC').setAttribute('aria-pressed',t==='c');$('#tR').setAttribute('aria-pressed',t==='r');$('#pc').classList.toggle('hid',t!=='c');$('#pr').classList.toggle('hid',t!=='r');
+function setTab(t){tab=t;view=t;$('#lp').classList.add('hid');$('#tb').classList.remove('hid');$('#ide').classList.remove('hid');$('#tL').setAttribute('aria-pressed','false');BRD=t==='c'?B.board:(car&&car.esp?'esp32':'uno');$('#tC').setAttribute('aria-pressed',t==='c');$('#tR').setAttribute('aria-pressed',t==='r');$('#pc').classList.toggle('hid',t!=='c');$('#pr').classList.toggle('hid',t!=='r');
  $('#ex').innerHTML=Object.keys(EX[t]).map(k=>'<option>'+k+'</option>').join('');loadEx()}
 $('#ex').onchange=loadEx;$('#tC').onclick=()=>setTab('c');$('#tR').onclick=()=>setTab('r');
 $('#code').addEventListener('input',()=>{up=false;compiled=null;gen=null;chk()});
 $('#code').addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();const t=e.target,s=t.selectionStart;t.value=t.value.slice(0,s)+'  '+t.value.slice(t.selectionEnd);t.selectionStart=t.selectionEnd=s+2}});
+/* --- Learn section: topics with live demos --- */
+let view='l',LT=null,LA=0,LP=0,CUR=null,CS={x:40,d:1,min:1023,max:0,on:false,t0:0,thr:null,h:[],last:0},EN={h:[],n:0,was:0},FL={step:0,last:0,max:0};
+const $L=id=>document.getElementById('L'+id),PX=s=>s.replace(/ id="([^"]+)"/g,' id="L$1"').replace(/url\(#(\w+)\)/g,'url(#L$1)'),gv=id=>+$L(id).value,tx=(id,t)=>{$L(id).textContent=t},at=(id,a,v)=>$L(id).setAttribute(a,v);
+const rg=(id,l,a,b,v,st)=>'<label class="m" style="display:block">'+l+' <output id="'+id+'v"></output><input type="range" id="'+id+'" min="'+a+'" max="'+b+'" value="'+v+'" step="'+(st||1)+'" data-lr></label>';
+const DEFS='<defs>'
+ +'<linearGradient id="gmt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6f8fa"/><stop offset=".45" stop-color="#b4bcc3"/><stop offset="1" stop-color="#6d7882"/></linearGradient>'
+ +'<linearGradient id="gyl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe45c"/><stop offset="1" stop-color="#e0a400"/></linearGradient>'
+ +'<linearGradient id="gbl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a86d8"/><stop offset="1" stop-color="#14508f"/></linearGradient>'
+ +'<linearGradient id="gpc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1fa66b"/><stop offset="1" stop-color="#0d6b44"/></linearGradient>'
+ +'<linearGradient id="grd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d23a3a"/><stop offset="1" stop-color="#8e1f1f"/></linearGradient>'
+ +'<linearGradient id="gbk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a525c"/><stop offset="1" stop-color="#1c2026"/></linearGradient>'
+ +'<radialGradient id="gtx" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#e9edf0"/><stop offset=".6" stop-color="#9aa4ad"/><stop offset="1" stop-color="#58636d"/></radialGradient>'
+ +'</defs>';
+const SV=(vb,body,al)=>'<svg viewBox="0 0 '+vb+'" role="img" aria-label="'+al+'">'+DEFS+body+'</svg>',T0='font-size="12" fill="var(--ink)"',TM='font-size="11" fill="var(--muted)"';
+const pin=(x,y)=>'<rect x="'+x+'" y="'+y+'" width="5" height="9" fill="#d9a21b"/>';
+function simC(k,kp,kd){let y=45,th=0,w=0,pe=0,mx=0,ts=0;const P=[],v=60,L=26,dt=.02,N=600;for(let i=0;i<N;i++){const e=y+L*th;let u;if(k==0)u=Math.abs(e)<3?0:-4*Math.sign(e);else u=cl(-kp*.01*e-(k==2?kd*.004*(e-pe)/dt:0),-4,4);pe=e;w+=(u-w)*dt/.12;th+=w*dt;y+=v*Math.sin(th)*dt;if(i%2==0)P.push([20+i*320/N,100+cl(y,-75,75)*.9]);if(-y>mx)mx=-y;if(Math.abs(y)>3)ts=i*dt}return{P,mx,ts}}
+const CALC='void calibrate() {\n  int lo = 1023; int hi = 0;\n  spinOnTheSpot();           // sweep the sensor over the line\n  while (calibrating) {\n    int v = analogRead(S_MID);\n    if (v < lo) lo = v;\n    if (v > hi) hi = v;\n  }\n  threshold = (lo + hi) / 2;  // halfway between white and black\n}';
+/* small seeded maze for the flood-fill demo (6 x 4) */
+const FM=(()=>{const C=6,Rw=4;let s=11;const rnd=()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+ const D=[[0,-1,1,4],[1,0,2,8],[0,1,4,1],[-1,0,8,2]],w=new Array(C*Rw).fill(15),seen=new Array(C*Rw).fill(0),st=[0];seen[0]=1;
+ while(st.length){const c=st[st.length-1],x=c%C,y=(c-x)/C,nb=[];D.forEach((d,i)=>{const a=x+d[0],b=y+d[1];if(a>=0&&b>=0&&a<C&&b<Rw&&!seen[a+b*C])nb.push([a,b,i])});if(!nb.length){st.pop();continue}const q=nb[Math.floor(rnd()*nb.length)],m=q[0]+q[1]*C;w[c]&=~D[q[2]][2];w[m]&=~D[q[2]][3];seen[m]=1;st.push(m)}
+ for(let k=0;k<3;k++){const x=1+Math.floor(rnd()*(C-2)),y=Math.floor(rnd()*Rw),c=x+y*C;if(w[c]&2){w[c]&=~2;w[c+1]&=~8}}
+ const goal=C-1,start=C*(Rw-1),dist=new Array(C*Rw).fill(-1),q=[goal];dist[goal]=0;
+ for(let h=0;h<q.length;h++){const c=q[h],x=c%C,y=(c-x)/C;D.forEach(d=>{if(w[c]&d[2])return;const a=x+d[0],b=y+d[1],m=a+b*C;if(a>=0&&b>=0&&a<C&&b<Rw&&dist[m]<0){dist[m]=dist[c]+1;q.push(m)}})}
+ const route=[start];while(route[route.length-1]!==goal){const c=route[route.length-1],x=c%C,y=(c-x)/C;let best=-1;D.forEach(d=>{if(w[c]&d[2])return;const m=(x+d[0])+(y+d[1])*C;if(dist[m]>=0&&dist[m]<dist[c])best=m});route.push(best)}
+ return{C,Rw,w,dist,goal,start,route,max:Math.max(...dist)}})();
+const TOP=[
+{id:'ir',c:'Sensors',t:'IR reflectance sensors',b:'A line sensor shines infrared light at the floor and measures how much comes back. Black absorbs the light and white reflects it.',
+ h:SV('640 320',`<polygon id="ia" fill="#ff4a3d" opacity=".32"/><polygon id="ib" fill="#ffb347"/>
+ <rect id="is" x="20" width="450" height="24" rx="3" stroke="#889"/>
+ <g transform="translate(215 18)"><rect x="0" y="0" width="170" height="12" rx="2" fill="url(#gpc)"/><rect x="62" y="-13" width="42" height="13" rx="2" fill="#2f6fd6"/><circle cx="83" cy="-6.5" r="4.5" fill="#e9c24a"/>${pin(10,-9)}${pin(22,-9)}${pin(34,-9)}${pin(46,-9)}
+ <rect x="34" y="12" width="36" height="26" rx="9" fill="#e9f2f8" stroke="#9ab"/><circle cx="52" cy="28" r="6" fill="#ff5a4f"/><rect x="100" y="12" width="36" height="26" rx="9" fill="url(#gbk)"/><circle cx="118" cy="28" r="5" fill="#667"/></g>
+ <text x="205" y="46" text-anchor="end" ${T0}>IR LED</text><text x="408" y="46" ${T0}>detector</text>
+ <rect x="520" y="40" width="40" height="240" rx="3" fill="var(--panel)" stroke="var(--line)"/><rect id="mb" x="522" width="36"/>
+ <line x1="512" x2="568" y1="162.7" y2="162.7" stroke="#2a8" stroke-width="2" stroke-dasharray="4 3"/><text x="574" y="166" ${TM}>500</text><text x="574" y="48" ${TM}>1023</text><text x="574" y="280" ${TM}>0</text>
+ <text id="mt" x="540" y="26" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)"></text><text x="540" y="302" text-anchor="middle" ${TM}>analog reading</text>`,'IR sensor module above a surface, with a reading meter')+rg('sd','Surface darkness',0,100,0)+rg('sh','Height above the surface',3,30,6)+'<p class="m" id="sout"></p>',
+ u(){const d=gv('sd'),h=gv('sh'),s=h<=8?1:1/(1+((h-8)/8)**2),r=120+d*7.6*s,g=Math.round(255-2.2*d),fy=66+h*7.2,w=12+h*1.3;at('is','y',fy);at('is','fill','rgb('+g+','+g+','+g+')');at('ia','points','257,56 277,56 '+(300+w*.6)+','+fy+' '+(300-w)+','+fy);at('ib','points',(300-w*.6)+','+fy+' '+(300+w)+','+fy+' 343,56 323,56');at('ib','opacity',(1-d/100*.9)*s*.8);const bh=Math.min(240,r/1023*240);at('mb','y',280-bh);at('mb','height',bh);at('mb','fill',r>500?'#2a8':'#c55');tx('mt',r>500?'LINE':'NO LINE');tx('sdv',d+'%');tx('shv',h+' mm');tx('sout','Analog reading: '+Math.round(r)+(r>500?'. Above 500, so the sensor reports a line.':'. Below 500, so it reports no line.')+(h>15?' The sensor is too high, so black and white look almost the same.':''))},
+ k:'Keep the sensor 3 to 10 mm above the floor. The reading is compared with a threshold to decide line or no line.',p:'<p>Cheap modules like the TCRT5000 have an analog output and often a digital output with a small adjustment screw (the blue box) for the threshold. An array of several sensors lets the robot know how far off the line it is, not just which side.</p>',lab:['c','IR sensor surface detector',1,'Try an IR sensor on the breadboard']},
+{id:'us',c:'Sensors',t:'Ultrasonic sensor (HC-SR04)',b:'The sensor sends a burst of 40 kHz sound and times the echo. Longer echo means a farther object.',
+ h:SV('640 270',`<rect x="70" y="66" width="18" height="108" rx="2" fill="url(#gbl)"/>${[0,1,2,3].map(i=>'<rect x="56" y="'+(78+i*22)+'" width="14" height="6" fill="#d9a21b"/><text x="4" y="'+(86+i*22)+'" '+TM+'>'+['VCC','TRIG','ECHO','GND'][i]+'</text>').join('')}
+ <rect x="88" y="76" width="34" height="38" rx="4" fill="url(#gmt)" stroke="#667"/><rect x="88" y="126" width="34" height="38" rx="4" fill="url(#gmt)" stroke="#667"/><g stroke="#555" opacity=".5"><line x1="100" x2="100" y1="80" y2="110"/><line x1="110" x2="110" y1="80" y2="110"/><line x1="100" x2="100" y1="130" y2="160"/><line x1="110" x2="110" y1="130" y2="160"/></g>
+ <text x="128" y="98" ${TM}>TX</text><text x="128" y="148" ${TM}>RX</text>
+ <clipPath id="uc"><rect x="124" y="0" width="520" height="200"/></clipPath><g clip-path="url(#uc)" fill="none" stroke="#4af" stroke-width="2"><circle id="u1" cx="124" cy="95"/><circle id="u2" cx="124" cy="95"/><circle id="u3" cx="124" cy="95"/></g><circle id="pk" r="5" fill="#fc3"/>
+ <rect id="uo" y="56" width="14" height="128" rx="2" fill="#e07b00"/>
+ <text x="20" y="206" ${TM}>TRIG</text><path d="M60 218H110V206H126V218H620" fill="none" stroke="#1b45f0" stroke-width="2"/><text x="108" y="200" ${TM}>10 µs</text>
+ <text x="20" y="252" ${TM}>ECHO</text><rect id="ew" x="130" y="238" height="14" fill="#2a8" opacity=".85"/><line x1="60" x2="620" y1="252" y2="252" stroke="var(--muted)"/><text id="ewl" y="234" ${TM}></text>`,'Ultrasonic sensor, an object and the echo timing')+rg('ud','Object distance (cm)',2,200,60)+'<p class="m" id="uout"></p>',
+ u(){const d=gv('ud'),us=Math.round(d*20/.343),ox=140+d*2.35;at('uo','x',ox);at('ew','width',Math.max(3,480*us/11700));at('ewl','x',135);tx('ewl','echo pulse = '+us+' µs');tx('udv',d+' cm');tx('uout','Echo time: '+us+' µs. Distance = echo time × 0.0343 ÷ 2 = '+(us*.0343/2).toFixed(1)+' cm.')},
+ tk(ms){const ox=140+gv('ud')*2.35,x=ox-124,ph=(ms/1800)%1;[1,2,3].forEach(k=>{const t=(ph+k/3)%1;at('u'+k,'r',Math.max(1,t*x));at('u'+k,'opacity',(1-t)*(t<1?1:0))});const t=ph<.5?ph*2:(ph-.5)*2;if(ph<.5){at('pk','cx',124+(ox-124)*t);at('pk','cy',95+(120-95)*t)}else{at('pk','cx',ox+(124-ox)*t);at('pk','cy',120+(145-120)*t)}},
+ k:'Pulse TRIG for 10 µs, then measure how long ECHO stays HIGH with pulseIn(). Divide by two because the sound travels there and back.',p:'<p>It works from about 2 cm to 400 cm. Soft or angled surfaces reflect poorly. The HC-SR04 needs 5 V, so on a 3.3 V board such as the ESP32 the ECHO signal should go through a voltage divider.</p>',lab:['c','Ultrasonic distance warning',1,'Try an ultrasonic sensor on the breadboard']},
+{id:'array',c:'Sensors',t:'Sensor arrays and line position',b:'Several sensors side by side tell the robot how far the line is to the left or right, not just whether it has been lost.',
+ h:SV('640 280',`<rect x="20" y="14" width="600" height="150" rx="6" fill="#f2f4f3" stroke="var(--line)"/><rect id="ln" y="14" width="40" height="150" fill="#14171a"/><g id="sn"></g>
+ <text x="30" y="34" font-size="12" fill="#444">floor, seen from above</text>
+ <line x1="20" x2="620" y1="228" y2="228" stroke="var(--muted)"/><line x1="320" x2="320" y1="218" y2="238" stroke="var(--ink)" stroke-width="2"/><rect id="eb" y="220" height="16" fill="#f0a23b"/>
+ <text x="20" y="256" ${TM}>steer left</text><text x="620" y="256" text-anchor="end" ${TM}>steer right</text><text x="320" y="256" text-anchor="middle" ${TM}>centred</text>`,'Five sensors over a line and the resulting error')+rg('al','Line position',-100,100,20)+rg('as','Sensor spacing (mm)',8,40,12)+'<p class="m" id="aout"></p>',
+ u(){const l=320+gv('al')*2.2,sp=gv('as')*3.2;at('ln','x',l-20);let n=0,sum=0,h='<rect x="'+(320-2*sp-18)+'" y="112" width="'+(4*sp+36)+'" height="12" rx="3" fill="#2d3640"/>';for(let i=0;i<5;i++){const x=320+(i-2)*sp,on=Math.abs(x-l)<22;if(on){n++;sum+=(i-2)*100}h+='<rect x="'+(x-11)+'" y="94" width="22" height="30" rx="4" fill="url(#gpc)" stroke="#063"/><circle cx="'+x+'" cy="104" r="5.5" fill="'+(on?'#ff3b3b':'#dfe6e2')+'" stroke="#444"/>'+(on?'<circle cx="'+x+'" cy="104" r="10" fill="#f33" opacity=".25"/>':'')+'<text x="'+x+'" y="142" text-anchor="middle" font-size="10" fill="'+(on?'#fff':'#444')+'">'+(i-2)*100+'</text>'}$L('sn').innerHTML=h;const e=n?sum/n:0;at('eb','x',320+Math.min(0,e*.6));at('eb','width',Math.abs(e)*.6);tx('alv',gv('al')+' px');tx('asv',gv('as')+' mm');
+  tx('aout',n?'Error = '+Math.round(e)+' (negative is left, positive is right). '+n+' sensor'+(n>1?'s see':' sees')+' the line.':'No sensor sees the line, so the robot is lost.');if(!n&&sp>40)tx('aout','The line has slipped between the sensors.')},
+ k:'Give each sensor a weight (-200, -100, 0, 100, 200). The average of the weights of the sensors that see the line is the error.',p:'<p>Sensors should be spaced closer than the line is wide, or the line can slip between two of them. Mounting them further ahead of the wheels gives earlier warning, but too far makes the robot cut corners.</p>',lab:['r','5-sensor array, proportional control',0,'Open the 5-sensor sketch in the line follower']},
+{id:'enc',c:'Sensors',t:'Wheel encoders',b:'A slotted disc spins between an infrared fork. Every slot that passes makes one pulse, so the Arduino can count how far each wheel has turned.',
+ h:SV('640 290',`<g id="ed"><circle r="104" fill="url(#gbk)" stroke="#111" stroke-width="2"/><g id="sl"></g><circle r="20" fill="url(#gmt)"/><circle r="5" fill="#333"/></g>
+ <g id="ef"><rect x="-18" y="-24" width="36" height="48" rx="6" fill="none" stroke="#333" stroke-width="8"/><circle id="efl" r="5" fill="#2a8"/></g><text x="20" y="40" ${T0}>optical fork</text><line x1="84" y1="44" x2="160" y2="70" stroke="var(--muted)"/>
+ <rect x="350" y="46" width="270" height="70" rx="4" fill="var(--panel)" stroke="var(--line)"/><path id="ep" fill="none" stroke="#1b45f0" stroke-width="2.5"/><text x="356" y="40" ${TM}>pulses on the interrupt pin (D2 or D3)</text><text id="eco" x="356" y="140" ${T0}></text>`.replace('<g id="ed">','<g id="ed" transform="translate(180 160)">').replace('<g id="ef">','<g id="ef" transform="translate(180 76)">'),'Slotted encoder disc and the pulses it makes')+rg('en','Slots in the disc',8,40,20,2)+rg('er','Wheel speed (rpm)',10,300,60)+'<p class="m" id="eout"></p>',
+ i(){EN={h:[],n:0,was:0}},
+ u(){const N=gv('en');let h='';const sw=2*Math.PI*88/N*.42;for(let i=0;i<N;i++)h+='<rect x="'+(-sw/2)+'" y="-96" width="'+sw+'" height="24" fill="var(--bg)" transform="rotate('+(i*360/N)+')"/>';$L('sl').innerHTML=h;tx('env',N);tx('erv',gv('er')+' rpm');const pps=gv('er')/60*N;tx('eout','At '+gv('er')+' rpm with '+N+' slots the Arduino sees '+pps.toFixed(0)+' pulses per second. With a 65 mm wheel each pulse is '+(Math.PI*65/N).toFixed(1)+' mm of travel.')},
+ tk(ms){const N=gv('en'),seg=360/N,dt=Math.min(50,ms-LP);LP=ms;LA=(LA+gv('er')/60*360*dt/1000*.18)%360;at('ed','transform','translate(180 160) rotate('+LA+')');const ph=((LA%seg)+seg)%seg,slot=Math.abs(ph-seg/2+seg/2>seg/2?ph-seg:ph)<seg*.21;const on=slot?1:0;if(on&&!EN.was)EN.n++;EN.was=on;at('efl','fill',on?'#2a8':'#c33');EN.h.push(on);if(EN.h.length>90)EN.h.shift();at('ep','d','M'+EN.h.map((v,i)=>(352+i*3)+' '+(v?56:106)).join('L'));tx('eco','Pulses counted: '+EN.n+'   Distance: '+(EN.n*Math.PI*65/N/10).toFixed(1)+' cm')},
+ k:'Count pulses with attachInterrupt(). Distance = pulses × π × wheel diameter ÷ slots. Comparing the left and right counts shows if the robot is drifting.',p:'<p>Encoders fix the biggest weakness of timing-based driving: a battery that sags makes the robot slower, but a pulse count is still exact. Wire the two outputs to D2 and D3, the Uno interrupt pins, so no pulse is missed while the sketch is busy. In the sketch, make the counters <code>volatile</code>.</p>'},
+{id:'cmp',c:'Sensors',t:'Compass and heading',b:'A compass module gives the direction the robot is facing. The robot can turn to an exact angle, and the shortest turn is found by wrapping the difference.',
+ h:SV('640 300',`<g transform="translate(190 150)"><circle r="120" fill="var(--panel)" stroke="var(--ink)" stroke-width="2"/>${Array.from({length:72},(_,i)=>'<line y1="-120" y2="'+(i%18==0?-98:i%6==0?-106:-112)+'" stroke="var(--muted)" stroke-width="'+(i%18==0?2.5:1)+'" transform="rotate('+i*5+')"/>').join('')}
+ <text y="-84" text-anchor="middle" font-size="16" font-weight="700" fill="#e33">N</text><text x="86" y="6" text-anchor="middle" font-size="14" fill="var(--ink)">E</text><text y="96" text-anchor="middle" font-size="14" fill="var(--ink)">S</text><text x="-86" y="6" text-anchor="middle" font-size="14" fill="var(--ink)">W</text>
+ <path id="ca" fill="none" stroke="#f0a23b" stroke-width="7" opacity=".8"/><g id="ct2"><line y1="-20" y2="-114" stroke="#2a8" stroke-width="3" stroke-dasharray="6 4"/><circle cy="-114" r="6" fill="#2a8"/></g>
+ <g id="cr"><rect x="-17" y="-28" width="34" height="56" rx="6" fill="#1b6ca8" stroke="#0a3d63" stroke-width="2"/><rect x="-24" y="-22" width="8" height="18" rx="2" fill="#222"/><rect x="16" y="-22" width="8" height="18" rx="2" fill="#222"/><rect x="-24" y="8" width="8" height="18" rx="2" fill="#222"/><rect x="16" y="8" width="8" height="18" rx="2" fill="#222"/><polygon points="0,-40 -9,-26 9,-26" fill="#ffd21f"/></g></g>
+ <rect x="360" y="40" width="250" height="22" rx="3" fill="var(--panel)" stroke="var(--line)"/><rect id="cb" x="360" y="40" height="22" fill="#1b45f0" opacity=".8"/><text x="360" y="32" ${TM}>analogRead(A3): 0 to 1023</text>
+ <text id="ct3" x="360" y="100" ${T0}></text><text id="ct4" x="360" y="124" ${T0}></text><text id="ct5" x="360" y="148" ${T0}></text>`,'Compass dial with robot heading, target and the shortest turn')+rg('ch','Robot heading (degrees)',0,359,350)+rg('cg','Target heading (degrees)',0,359,20)+'<p class="m" id="cout"></p><pre class="m" style="white-space:pre-wrap;font:400 .8rem var(--m)">float angleDiff(float target, float now) {\n  float d = target - now;\n  while (d > 180)  d -= 360;\n  while (d < -180) d += 360;\n  return d;            // negative: turn left, positive: turn right\n}</pre>',
+ u(){const a=gv('ch'),b=gv('cg');let d=b-a;while(d>180)d-=360;while(d<-180)d+=360;at('cr','transform','rotate('+a+')');at('ct2','transform','rotate('+b+')');const r=76,p=t=>[r*Math.sin(t*Math.PI/180),-r*Math.cos(t*Math.PI/180)];const s=p(a),e=p(a+d);at('ca','d',Math.abs(d)<.5?'':'M'+s[0]+' '+s[1]+'A'+r+' '+r+' 0 0 '+(d>0?1:0)+' '+e[0]+' '+e[1]);const rd=Math.round(a*1023/360);at('cb','width',250*rd/1023);tx('chv',a+'°');tx('cgv',b+'°');tx('ct3','analogRead = '+rd);tx('ct4','Naive difference: '+(b-a)+'°');tx('ct5','Wrapped difference: '+Math.round(d)+'°');tx('cout',Math.abs(d)<2.5?'Facing the target. The sketch stops turning when the difference is under 2.5°.':'Shortest turn: '+Math.abs(Math.round(d))+'° to the '+(d>0?'right (clockwise).':'left (anticlockwise).')+(Math.abs(b-a)>180?' Without wrapping, the robot would turn the long way round.':''))},
+ k:'headingDeg = analogRead(A3) × 360 ÷ 1023. Turn until the wrapped difference to the target is small.',p:'<p>Gyroscopes and magnetometers drift or get disturbed by motors and batteries, so keep the compass away from the motors and recalibrate often. Using the compass, a robot can make exact 90° turns in a maze, which timing the motors cannot do reliably.</p>'},
+{id:'dc',c:'Motors',t:'DC motors and the H-bridge',b:'A motor driver contains an H-bridge: four switches that let current flow through the motor in either direction.',
+ h:SV('640 270',`<g transform="translate(10 0) scale(.95)"><text x="10" y="16" ${T0}>Battery +</text><line x1="60" x2="300" y1="22" y2="22" stroke="#e33" stroke-width="3"/><text x="10" y="214" ${T0}>GND</text><line x1="60" x2="300" y1="200" y2="200" stroke="#36c" stroke-width="3"/><path d="M90 22V60M90 86V130M90 156V200M250 22V60M250 86V130M250 156V200M90 108H140M200 108H250" stroke="var(--muted)" stroke-width="3" fill="none"/><rect id="s1" x="80" y="60" width="20" height="26" rx="3"/><rect id="s2" x="240" y="60" width="20" height="26" rx="3"/><rect id="s3" x="80" y="130" width="20" height="26" rx="3"/><rect id="s4" x="240" y="130" width="20" height="26" rx="3"/><text x="106" y="78" ${TM}>S1</text><text x="266" y="78" ${TM}>S2</text><text x="106" y="148" ${TM}>S3</text><text x="266" y="148" ${TM}>S4</text><circle cx="170" cy="108" r="30" fill="var(--panel)" stroke="var(--ink)" stroke-width="2"/><g id="dm" transform="translate(170 108)"><path d="M0-22V22M-22 0H22" stroke="#f0a23b" stroke-width="5"/></g><path id="dp" fill="none" stroke="#f0a23b" stroke-width="6" opacity=".7"/><text x="170" y="112" text-anchor="middle" ${T0}>M</text></g>
+ <g transform="translate(350 40)"><rect x="0" y="40" width="110" height="80" rx="8" fill="url(#gyl)" stroke="#a07800"/><g fill="#a07800" opacity=".6"><circle cx="14" cy="56" r="4"/><circle cx="96" cy="56" r="4"/><circle cx="14" cy="104" r="4"/><circle cx="96" cy="104" r="4"/></g><rect x="110" y="54" width="104" height="52" rx="9" fill="url(#gmt)" stroke="#667"/><rect x="204" y="54" width="22" height="52" rx="5" fill="url(#gbk)"/><rect x="212" y="68" width="22" height="6" fill="#d9a21b"/><rect x="212" y="86" width="22" height="6" fill="#d9a21b"/>
+ <circle cx="55" cy="80" r="44" fill="#1e2226" stroke="#000" stroke-width="2"/><g id="dw" transform="translate(55 80)"><circle r="26" fill="#cfd5da" stroke="#789"/><path d="M0-26V26M-26 0H26M-18-18L18 18M18-18L-18 18" stroke="#789" stroke-width="3"/><circle r="6" fill="#444"/></g>
+ <text x="0" y="150" ${TM}>TT gear motor and wheel</text></g>
+ <g transform="translate(340 214)"><rect width="150" height="42" rx="4" fill="url(#grd)"/><rect x="10" y="6" width="44" height="30" fill="url(#gbk)"/><rect x="68" y="12" width="14" height="22" fill="#2a2"/><rect x="88" y="12" width="14" height="22" fill="#2a2"/><rect x="108" y="12" width="14" height="22" fill="#2a2"/><text x="160" y="26" ${TM}>L298N motor driver</text></g>`,'H-bridge with four switches driving a gear motor')+'<label class="m"><input type="checkbox" id="i1" data-lr checked> IN1 HIGH</label> <label class="m"><input type="checkbox" id="i2" data-lr> IN2 HIGH</label><p class="m" id="dout"></p>',
+ u(){const a=$L('i1').checked,b=$L('i2').checked,c=a&&!b?[1,0,0,1]:!a&&b?[0,1,1,0]:a&&b?[0,0,1,1]:[0,0,0,0];c.forEach((v,i)=>at('s'+(i+1),'fill',v?'#2a8':'#999'));at('dp','d',a&&!b?'M90 22V60M90 86V108H140M200 108H250V130M250 156V200':!a&&b?'M250 22V60M250 86V108H200M140 108H90V130M90 156V200':a&&b?'M140 108H90V130M90 156V200M200 108H250V130M250 156V200':'');tx('dout',a&&!b?'Forward: current flows left to right through the motor.':!a&&b?'Reverse: current flows right to left, so the motor spins the other way.':a&&b?'Brake: both motor wires are connected to ground, which stops it quickly.':'Coast: all switches are open and the motor spins freely.')},
+ tk(ms){const a=$L('i1').checked,b=$L('i2').checked;LA+=a&&!b?7:!a&&b?-7:0;at('dm','transform','translate(170 108) rotate('+LA+')');at('dw','transform','translate(55 80) rotate('+LA+')')},
+ k:'IN1 and IN2 pick the direction. The ENA pin gets a PWM signal to set the speed.',p:'<p>The L298N drops about 2 V across the bridge, so a 6 V pack gives the motors about 4 V. The TB6612FNG drops far less and is more efficient. Always join the battery ground to the Arduino ground.</p>',lab:['c','Potentiometer controls a DC motor',1,'Spin a DC motor on the breadboard']},
+{id:'pwm',c:'Motors',t:'PWM speed control',b:'Pulse width modulation switches the power on and off very fast. The longer it stays on, the faster the motor runs.',
+ h:SV('640 260',`<rect x="20" y="20" width="400" height="140" rx="4" fill="var(--panel)" stroke="var(--line)"/><line x1="20" y1="140" x2="420" y2="140" stroke="var(--muted)"/><g stroke="var(--line)"><line x1="120" x2="120" y1="20" y2="160"/><line x1="220" x2="220" y1="20" y2="160"/><line x1="320" x2="320" y1="20" y2="160"/></g><path id="pw" fill="none" stroke="#1b45f0" stroke-width="3"/><line id="pa" x1="20" x2="420" stroke="#e33" stroke-width="2" stroke-dasharray="6 4"/><text x="26" y="36" ${TM}>6 V</text><text x="26" y="154" ${TM}>0 V</text><text x="424" y="38" ${TM}>one period</text><text x="20" y="182" ${TM}>average voltage (dashed red line)</text>
+ <g transform="translate(540 90)"><circle r="62" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/><g id="fn"><ellipse cx="0" cy="-30" rx="12" ry="30" fill="#f0a23b"/><ellipse cx="0" cy="-30" rx="12" ry="30" fill="#f0a23b" transform="rotate(120)"/><ellipse cx="0" cy="-30" rx="12" ry="30" fill="#f0a23b" transform="rotate(240)"/></g><circle r="8" fill="#333"/><text y="88" text-anchor="middle" ${TM}>motor speed</text></g>
+ <rect x="20" y="206" width="400" height="16" rx="3" fill="var(--panel)" stroke="var(--line)"/><rect id="avb" x="20" y="206" height="16" rx="3" fill="#2a8"/><text x="20" y="244" ${TM}>average voltage</text>`,'PWM waveform, average voltage and a spinning fan')+rg('pd','analogWrite value (0 to 255)',0,255,128)+'<p class="m" id="pout"></p>',
+ u(){const n=gv('pd'),d=n/255;let p='M20 140';for(let i=0;i<4;i++){const x=20+i*100;if(d>0)p+='V40H'+(x+100*d)+'V140';p+='H'+(x+100)}at('pw','d',p);at('pa','y1',140-100*d);at('pa','y2',140-100*d);at('avb','width',Math.max(0,400*d));tx('pdv',n);tx('pout','Duty cycle '+Math.round(d*100)+'%. Average voltage = '+(d*6).toFixed(1)+' V on a 6 V supply, so the motor runs at roughly '+Math.round(d*100)+'% speed.')},
+ tk(ms){LA+=gv('pd')/255*14;at('fn','transform','rotate('+LA+')')},
+ k:'analogWrite(pin, 0 to 255) sets the duty cycle. 127 is about half speed.',p:'<p>Motors also need a minimum duty cycle to start moving at all, and on mud or with a heavy car that threshold is higher. That is why a robot that crawls at 100 on a smooth floor may stall in mud.</p>',lab:['c','Potentiometer dimmer',1,'Dim an LED with PWM on the breadboard']},
+{id:'servo',c:'Motors',t:'Servo motors',b:'A servo turns to a set angle. The angle is chosen by the width of a pulse repeated every 20 ms.',
+ h:SV('640 310',`<g stroke="var(--muted)" fill="none" stroke-dasharray="3 5"><path d="M205 150A85 85 0 0 1 375 150"/></g><text x="190" y="170" ${TM}>0°</text><text x="380" y="170" ${TM}>180°</text><text x="290" y="54" text-anchor="middle" ${TM}>90°</text>
+ <rect x="222" y="186" width="136" height="14" rx="2" fill="#2a5da0"/><rect x="206" y="190" width="168" height="8" rx="2" fill="#2a5da0"/><circle cx="214" cy="194" r="3" fill="var(--bg)"/><circle cx="366" cy="194" r="3" fill="var(--bg)"/>
+ <rect x="222" y="160" width="136" height="90" rx="6" fill="url(#gbl)" stroke="#0e3560"/><rect x="262" y="144" width="62" height="18" rx="4" fill="url(#gbl)" stroke="#0e3560"/><circle cx="290" cy="150" r="12" fill="url(#gmt)" stroke="#667"/>
+ <g id="sh" transform="rotate(0 290 150)"><rect x="281" y="66" width="18" height="84" rx="9" fill="#f3f3f3" stroke="#aaa"/><circle cx="290" cy="76" r="3" fill="#999"/><circle cx="290" cy="94" r="3" fill="#999"/><circle cx="290" cy="150" r="9" fill="#ddd" stroke="#999"/></g>
+ <path d="M358 214C400 214 410 190 470 190" fill="none" stroke="#ff9a1f" stroke-width="5"/><path d="M358 224C400 224 410 210 470 210" fill="none" stroke="#d62828" stroke-width="5"/><path d="M358 234C400 234 410 230 470 230" fill="none" stroke="#6b3b1f" stroke-width="5"/><text x="478" y="194" ${TM}>signal (PWM pin)</text><text x="478" y="214" ${TM}>5 V</text><text x="478" y="234" ${TM}>GND</text>
+ <rect x="20" y="272" width="600" height="2" fill="var(--muted)"/><rect id="sp" x="20" y="258" height="14" fill="#1b45f0"/><text x="20" y="298" ${TM}>One 20 ms period (the pulse repeats 50 times a second)</text><text id="spl" x="620" y="298" text-anchor="end" ${TM}></text>`,'Servo with arm and the pulse width that sets its angle')+rg('sg','Angle in servo.write()',0,180,90)+'<p class="m" id="sout"></p>',
+ u(){const a=gv('sg'),w=Math.round(544+a*(2400-544)/180);at('sh','transform','rotate('+(a-90)+' 290 150)');at('sp','width',w/20000*600);tx('spl','pulse = '+w+' µs');tx('sgv',a+'°');tx('sout','servo.write('+a+') sends a pulse of '+w+' µs every 20 ms.')},
+ k:'Include Servo.h, call attach(pin) once in setup(), then write(angle) from 0 to 180.',p:'<p>A servo moves at a limited speed, so step the angle in small increments with a short delay for a smooth sweep. Power it from the battery rail, not from the Arduino pin, and join the grounds.</p>',lab:['c','Servo sweep',1,'Sweep a servo on the breadboard']},
+{id:'wheels',c:'Motors',t:'Wheels, gearing and tyres',b:'Wheel diameter turns motor speed into car speed, and trades it against pulling force.',
+ h:SV('640 250',`<line x1="10" x2="630" y1="210" y2="210" stroke="var(--muted)" stroke-width="2"/><g id="wh"><circle id="wc" fill="#1f2328" stroke="#000" stroke-width="2"/><circle id="wt" fill="none" stroke="#555" stroke-width="5" stroke-dasharray="6 5"/><circle id="wb" fill="#cfd5da" stroke="#789"/><path id="wp" stroke="#789" stroke-width="3"/><circle id="wa" r="5" fill="#444"/></g>
+ <line id="dl" y1="30" y2="30" stroke="var(--ink)"/><text id="dt" y="24" text-anchor="middle" ${T0}></text>
+ <text x="330" y="60" ${T0}>Speed</text><rect x="330" y="68" width="280" height="14" rx="3" fill="var(--panel)" stroke="var(--line)"/><rect id="bs" x="330" y="68" height="14" rx="3" fill="#1b45f0"/>
+ <text x="330" y="124" ${T0}>Pulling force</text><rect x="330" y="132" width="280" height="14" rx="3" fill="var(--panel)" stroke="var(--line)"/><rect id="bf" x="330" y="132" height="14" rx="3" fill="#e07b00"/>`,'Wheel on the ground with speed and force bars')+rg('wd','Wheel diameter (mm)',40,90,65)+rg('wr','Motor speed (rpm)',100,300,200)+'<p class="m" id="wout"></p>',
+ u(){const d=gv('wd'),r=gv('wr'),v=r/60*Math.PI*d/1000,pr=d*.95,cy=210-pr,cx=160;LA=LA||0;[['wc',pr],['wt',pr-3],['wb',pr*.48]].forEach(q=>{at(q[0],'cx',cx);at(q[0],'cy',cy);at(q[0],'r',q[1])});at('wa','cx',cx);at('wa','cy',cy);at('wp','d','M'+cx+' '+(cy-pr*.48)+'V'+(cy+pr*.48)+'M'+(cx-pr*.48)+' '+cy+'H'+(cx+pr*.48));at('dl','x1',cx-pr);at('dl','x2',cx+pr);at('dt','x',cx);tx('dt','diameter '+d+' mm');at('bs','width',Math.min(280,v*320));at('bf','width',Math.min(280,65/d*150));tx('wdv',d+' mm');tx('wrv',r+' rpm');tx('wout','Speed = rpm ÷ 60 × π × diameter = '+v.toFixed(2)+' m/s. A bigger wheel is faster, but gives less pulling force on a slope or in mud. A wider tyre grips better on the bridge.')},
+ tk(ms){const d=gv('wd'),cy=210-d*.95;LA+=gv('wr')/60*.35;at('wh','transform','rotate('+LA+' 160 '+cy+')')},
+ k:'Speed = rpm ÷ 60 × π × diameter. Force goes the other way: bigger wheels pull less.',p:'<p>Tyre choice matters on the obstacle track: knobby tyres grip mud, soft rubber grips the bridge and slippery patch, and wide tyres resist the bridge sway. Try them in the chassis designer.</p>',lab:['r','',0,'Open the chassis designer']},
+{id:'ctl',c:'Line following',t:'Control strategies: on/off, P and PD',b:'How the robot reacts to its error decides whether it follows the line smoothly or wobbles.',
+ h:SV('360 210','<rect x="20" y="16" width="320" height="160" rx="4" fill="var(--panel)" stroke="var(--line)"/><g stroke="var(--line)" stroke-dasharray="3 4"><line x1="20" x2="340" y1="58" y2="58"/><line x1="20" x2="340" y1="142" y2="142"/><line x1="100" x2="100" y1="16" y2="176"/><line x1="180" x2="180" y1="16" y2="176"/><line x1="260" x2="260" y1="16" y2="176"/></g><line x1="20" x2="340" y1="100" y2="100" stroke="#111" stroke-width="7" opacity=".55"/><text x="330" y="94" text-anchor="end" font-size="9" fill="var(--ink)">the line</text><path id="cp" fill="none" stroke="#1b45f0" stroke-width="2.5"/><circle cx="20" cy="140.5" r="4" fill="#e33"/><text x="28" y="156" font-size="9" fill="var(--ink)">robot starts off the line</text><text x="180" y="196" text-anchor="middle" font-size="9" fill="var(--muted)">time</text>','Robot path returning to a line')+'<label class="m">Strategy <select id="ck" data-lr><option value="0">On/off (bang-bang)</option><option value="1" selected>Proportional (P)</option><option value="2">PD (adds damping)</option></select></label>'+rg('kp','Gain (Kp)',1,40,12)+rg('kd','Damping (Kd)',0,30,10)+'<p class="m" id="cout"></p>',
+ u(){const k=+$L('ck').value,r=simC(k,gv('kp'),gv('kd'));at('cp','d','M'+r.P.map(p=>p.join(' ')).join('L'));tx('kpv',gv('kp'));tx('kdv',gv('kd'));tx('cout','Overshoot '+r.mx.toFixed(0)+' px past the line. '+(r.ts>=11.9?'It never settles and keeps wobbling.':'It settles on the line after about '+r.ts.toFixed(1)+' s.')+(k==0?' On/off control swings between two fixed turns, so it always zig-zags.':k==2?' The damping term reduces the overshoot.':' Raise the gain for a faster response, but too much makes it oscillate.'))},
+ k:'turn = Kp × error + Kd × (change in error). Bang-bang is simple, P is smoother, PD is smoother still.',p:'<p>The full version adds an integral term (PID). For line following, a well-tuned P or PD controller using a sensor array is usually enough. Slow down when the error is large so the car stays on the line.</p>',lab:['r','5-sensor array, proportional control',0,'Open the P-control sketch in the line follower']},
+{id:'cal',c:'Line following',t:'Automatic calibration',b:'Lighting changes how bright black and white look. Calibration measures both and picks a threshold between them, automatically.',
+ h:SV('360 262','<rect x="20" y="22" width="320" height="40" rx="3" fill="#f4f7f5" stroke="#888"/><rect x="130" y="22" width="100" height="40" fill="#111"/><text x="60" y="46" text-anchor="middle" font-size="9" fill="#555">white floor</text><text x="180" y="46" text-anchor="middle" font-size="9" fill="#ddd">black line</text><text x="300" y="46" text-anchor="middle" font-size="9" fill="#555">white floor</text><g id="cm"><rect x="-12" y="2" width="24" height="12" rx="2" fill="url(#gpc)"/><rect x="-9" y="14" width="8" height="7" rx="3" fill="#e9f2f8" stroke="#9ab"/><rect x="1" y="14" width="8" height="7" rx="3" fill="url(#gbk)"/></g><rect x="20" y="82" width="320" height="130" rx="4" fill="var(--panel)" stroke="var(--line)"/><line id="cn1" x1="20" x2="340" stroke="#c55" stroke-dasharray="2 3" opacity="0"/><line id="cn2" x1="20" x2="340" stroke="#59c" stroke-dasharray="2 3" opacity="0"/><path id="cg" fill="none" stroke="#1b45f0" stroke-width="2"/><line id="cf" x1="20" x2="340" stroke="#999" stroke-dasharray="4 4"/><line id="ct" x1="20" x2="340" stroke="#2a8" stroke-width="2"/><text x="24" y="96" '+T0.replace('12','9')+'>sensor reading</text><text id="cl1" x="336" text-anchor="end" fill="#777" font-size="9"></text><text id="cl2" x="336" text-anchor="end" fill="#2a8" font-size="9"></text>','Sensor sweeping across a line while calibrating')+'<div class="row"><button class="b pri" id="cgo">Start calibration</button></div>'+rg('ca','Room light (IR interference)',0,100,0)+'<p class="m" id="cout"></p><pre class="m" style="white-space:pre-wrap;font:400 .8rem var(--m)">'+CALC+'</pre>',
+ i(){calGo()},
+ u(){tx('cav',gv('ca')+'%')},
+ tk(ms){const a=gv('ca'),W=120+4*a,Bk=880-3*a;CS.x+=CS.d*2.4;if(CS.x>320){CS.x=320;CS.d=-1}if(CS.x<40){CS.x=40;CS.d=1}const dk=cl((CS.x-120)/14,0,1)*cl((240-CS.x)/14,0,1),r=W+(Bk-W)*dk;if(CS.on){CS.min=Math.min(CS.min,r);CS.max=Math.max(CS.max,r);if(ms-CS.t0>3000){CS.on=false;CS.thr=(CS.min+CS.max)/2}}
+  CS.h.push(r);if(CS.h.length>160)CS.h.shift();const Y=v=>205-v/1023*115;at('cm','transform','translate('+CS.x+' 0)');at('cg','d','M'+CS.h.map((v,i)=>(20+i*2)+' '+Y(v)).join('L'));at('cf','y1',Y(500));at('cf','y2',Y(500));
+  const t=CS.thr,ok=(th)=>W<th&&Bk>th;if(t!==null){at('ct','y1',Y(t));at('ct','y2',Y(t))}else{at('ct','y1',-50);at('ct','y2',-50)}const sh=t!==null&&CS.max>0;at('cn1','opacity',sh?.9:0);at('cn2','opacity',sh?.9:0);if(sh){at('cn1','y1',Y(CS.max));at('cn1','y2',Y(CS.max));at('cn2','y1',Y(CS.min));at('cn2','y2',Y(CS.min))}
+  tx('cl1','fixed threshold 500');tx('cl2',t===null?'':'calibrated threshold '+Math.round(t));at('cl1','y',Y(500)-3);at('cl2','y',Y(t===null?0:t)-3);
+  tx('cout',(CS.on?'Calibrating... the sensor sweeps over black and white and records the lowest and highest readings. ':t===null?'Press Start calibration. ':'Calibrated: low '+Math.round(CS.min)+', high '+Math.round(CS.max)+', threshold '+Math.round(t)+'. ')+'With a fixed threshold of 500 the line is '+(ok(500)?'detected correctly. ':'misread. ')+(t!==null?'The calibrated threshold '+(ok(t)?'works.':'would need recalibrating for this light.'):''))},
+ k:'threshold = (lowest reading + highest reading) ÷ 2, measured on the real track under the real lighting.',p:'<p>In the simulator the example sketch spins the robot once on the spot so the middle sensor crosses the line, records the lowest and highest values, then follows the line with the new threshold. Real robots do the same at the start of each run.</p>',lab:['r','Auto-calibrating line follower (3 sensors)',0,'Open the auto-calibrating sketch']},
+{id:'wall',c:'Maze navigation',t:'Wall following with ultrasonics',b:'Three ultrasonic sensors measure the distance to the wall on the left, in front and on the right. Holding a steady distance from one wall keeps the robot in the corridor.',
+ h:SV('640 330',`<rect x="20" y="40" width="600" height="14" fill="#2b3440"/><rect x="20" y="246" width="600" height="14" fill="#2b3440"/><rect x="606" y="40" width="14" height="220" fill="#2b3440"/><rect x="430" y="40" width="90" height="14" fill="var(--bg)"/><text x="475" y="34" text-anchor="middle" ${TM}>opening</text>
+ <line x1="20" x2="620" y1="150" y2="150" stroke="var(--line)" stroke-dasharray="6 6"/><polyline id="wtr" fill="none" stroke="#1b45f0" stroke-width="2.5" stroke-dasharray="5 3"/>
+ <g id="wr"><line id="wbl" x1="0" y1="0" x2="0" y2="0" stroke="#e33" stroke-width="2"/><line id="wbr" stroke="#2a8" stroke-width="2"/><line id="wbf" stroke="#fa3" stroke-width="2"/>
+ <rect x="-36" y="-26" width="72" height="52" rx="8" fill="#1b6ca8" stroke="#0a3d63" stroke-width="2"/><rect x="-30" y="-34" width="18" height="10" rx="2" fill="#222"/><rect x="12" y="-34" width="18" height="10" rx="2" fill="#222"/><rect x="-30" y="24" width="18" height="10" rx="2" fill="#222"/><rect x="12" y="24" width="18" height="10" rx="2" fill="#222"/><polygon points="44,0 30,-9 30,9" fill="#ffd21f"/>
+ <circle cx="26" cy="0" r="6" fill="url(#gmt)" stroke="#555"/><circle cx="0" cy="-26" r="6" fill="url(#gmt)" stroke="#555"/><circle cx="0" cy="26" r="6" fill="url(#gmt)" stroke="#555"/></g>
+ <text id="wlt" ${T0} fill="#e33"></text><text id="wrt" ${T0}></text><text id="wft" ${T0}></text>
+ <text x="20" y="290" ${TM}>left motor</text><rect x="90" y="280" width="200" height="12" rx="3" fill="var(--panel)" stroke="var(--line)"/><rect id="wlm" x="90" y="280" height="12" rx="3" fill="#1b45f0"/>
+ <text x="20" y="314" ${TM}>right motor</text><rect x="90" y="304" width="200" height="12" rx="3" fill="var(--panel)" stroke="var(--line)"/><rect id="wrm" x="90" y="304" height="12" rx="3" fill="#e07b00"/>
+ <text x="320" y="290" ${TM}>Dashed blue: path with this gain</text>`,'Robot following a corridor wall with three ultrasonic beams')+rg('wo','Starting offset from the middle',-70,70,45)+rg('wk','Gain (Kp)',1,40,12)+'<p class="m" id="wout"></p>',
+ u(){const off=gv('wo'),kp=gv('wk'),x=130,y=150+off,mm=1.5;const left=y-54,right=246-y,front=606-(x+44);at('wr','transform','translate('+x+' '+y+')');at('wbl','x2',0);at('wbl','y2',-(left));at('wbr','x2',0);at('wbr','y2',right);at('wbf','x1',44);at('wbf','x2',44+front);at('wbf','y1',0);at('wbf','y2',0);
+  at('wbl','y1',-26);at('wbl','y2',-left);at('wbr','y1',26);at('wbr','y2',right);at('wbl','x1',0);at('wbr','x1',0);
+  const lt=$L('wlt');lt.setAttribute('x',x+44);lt.setAttribute('y',y-left/2);lt.textContent='left '+Math.round(left*mm)+' mm';const rt=$L('wrt');rt.setAttribute('x',x+44);rt.setAttribute('y',y+right/2+4);rt.textContent='right '+Math.round(right*mm)+' mm';const ft=$L('wft');ft.setAttribute('x',470);ft.setAttribute('y',y-8);ft.textContent='front '+Math.round(front*mm)+' mm';
+  let yy=off,th=0,w=0;const pts=[];for(let i=0;i<500;i++){const e=yy;const u=cl(-kp*.01*e,-4,4);w+=(u-w)*.02/.12;th+=w*.02;yy+=60*Math.sin(th)*.02;if(i%5==0)pts.push((x+i*.97)+','+(150+cl(yy,-90,90)))}at('wtr','points',pts.join(' '));
+  const e=off,turn=cl(-kp*.01*e*40,-60,60);at('wlm','width',Math.max(4,200*cl((150+turn)/255,0,1)));at('wrm','width',Math.max(4,200*cl((150-turn)/255,0,1)));tx('wov',off+' px');tx('wkv',kp);tx('wout',(off===0?'In the middle: both motors run at the same speed.':'The robot is '+(off>0?'too close to the right wall':'too close to the left wall')+', so it steers '+(off>0?'left':'right')+' by speeding up the '+(off>0?'right':'left')+' motor.')+' The error is how far the left distance is from the wanted distance, and the correction is Kp × error.')},
+ k:'Left-hand rule: if the left side opens up, turn left. Else if the front is blocked, turn right (or around). Else drive forward and steer with P control to stay a fixed distance from the left wall.',p:'<p>The rule solves any maze whose goal touches the outer wall, but it can circle forever around a goal in the middle. Keep the sensors away from the corners of the car so side beams are not clipped, and slow down while turning.</p>',lab:['c','Ultrasonic distance warning',1,'Try an ultrasonic sensor on the breadboard']},
+{id:'flood',c:'Maze navigation',t:'Solving a maze with flood fill',b:'Flood fill numbers every cell with how many moves it is from the goal. The robot just keeps stepping to the neighbour with the lowest number.',
+ h:SV('640 360',`<g id="fcg"></g><g id="fwl" stroke="#2b3440" stroke-width="5" stroke-linecap="round"></g><polyline id="frt" fill="none" stroke="#e33" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/><g id="fnum"></g>
+ <text x="520" y="44" ${T0}>How to read it</text><rect x="520" y="56" width="16" height="16" fill="rgba(70,140,255,.35)"/><text x="544" y="69" ${TM}>start</text><rect x="520" y="80" width="16" height="16" fill="rgba(61,220,151,.5)"/><text x="544" y="93" ${TM}>goal (number 0)</text><rect x="520" y="104" width="16" height="16" fill="rgba(240,162,59,.4)"/><text x="544" y="117" ${TM}>filled so far</text><line x1="520" x2="536" y1="140" y2="140" stroke="#e33" stroke-width="4"/><text x="544" y="144" ${TM}>shortest route</text>`,'Small maze being filled with distances from the goal')+rg('fs','Fill steps',0,FM.max,0)+'<label class="m"><input type="checkbox" id="fa" data-lr checked> Auto-play</label><p class="m" id="fout"></p>',
+ i(){FL.step=0;FL.last=0},
+ u(){const C=FM.C,R=FM.Rw,cs=80,ox=24,oy=20;let g='',n='',wl='';const a=$L('fa').checked;if(!a)FL.step=gv('fs');const st=FL.step;for(let c=0;c<C*R;c++){const x=c%C,y=(c-x)/C,d=FM.dist[c],on=d<=st;let f='transparent';if(c===FM.goal)f='rgba(61,220,151,.5)';else if(c===FM.start)f='rgba(70,140,255,.35)';else if(on)f='rgba(240,162,59,'+(.15+.5*(1-d/FM.max))+')';g+='<rect x="'+(ox+x*cs)+'" y="'+(oy+y*cs)+'" width="'+cs+'" height="'+cs+'" fill="'+f+'" stroke="var(--line)"/>';if(on)n+='<text x="'+(ox+x*cs+cs/2)+'" y="'+(oy+y*cs+cs/2+7)+'" text-anchor="middle" font-size="22" font-weight="700" fill="var(--ink)">'+d+'</text>';const w=FM.w[c],X=ox+x*cs,Y=oy+y*cs;if(w&1)wl+='M'+X+' '+Y+'h'+cs;if(w&8)wl+='M'+X+' '+Y+'v'+cs;if(y===R-1&&w&4)wl+='M'+X+' '+(Y+cs)+'h'+cs;if(x===C-1&&w&2)wl+='M'+(X+cs)+' '+Y+'v'+cs}
+  $L('fcg').innerHTML=g;$L('fnum').innerHTML=n;$L('fwl').innerHTML='<path d="'+wl+'"/>';const done=st>=FM.dist[FM.start];at('frt','points',done?FM.route.map(c=>(ox+(c%C)*cs+cs/2)+','+(oy+Math.floor(c/C)*cs+cs/2)).join(' '):'');$L('fs').value=st;tx('fsv',st);tx('fout',done?'The wave has reached the start. Following the lowest numbers from the start gives the shortest route: '+(FM.route.length-1)+' moves.':'The wave spreads one step at a time from the goal. Each cell shows how many moves are left.')},
+ tk(ms){if(!$L('fa').checked)return;if(ms-FL.last>520){FL.last=ms;FL.step++;if(FL.step>FM.max+4)FL.step=0;CUR.u()}},
+ k:'Repeat: sense the walls of the current cell, recompute the distances, then step to the neighbour with the smallest number.',p:'<p>A real robot does not know the walls in advance. It discovers them with the ultrasonic sensors, records them, and recomputes the numbers after every move, so the route keeps improving as the map fills in. The encoders measure one cell of travel and the compass makes the 90° turns exact.</p>'}
+];
+function calGo(){CS.min=1023;CS.max=0;CS.thr=null;CS.on=true;CS.t0=performance.now()}
+function openT(id){const t=TOP.find(x=>x.id===id);if(!t)return;CUR=t;document.querySelectorAll('[data-lt]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.lt===id));
+ $('#lart').innerHTML=PX('<h2>'+t.t+'</h2><p class="lede">'+t.b+'</p><div class="ldemo">'+t.h+'</div><div class="key"><strong>Key idea:</strong> '+t.k+'</div>'+t.p+(t.lab?'<p><button class="b pri" id="lgo">'+t.lab[3]+'</button></p>':''));LT=t.tk||null;LA=0;LP=performance.now();if(t.i)t.i();t.u()}
+$('#ltl').innerHTML=['Sensors','Motors','Line following','Maze navigation'].map(c=>'<h3>'+c+'</h3>'+TOP.filter(t=>t.c===c).map(t=>'<button class="b" data-lt="'+t.id+'" aria-pressed="false">'+t.t+'</button>').join('')).join('');
+$('#ltl').addEventListener('click',e=>{const b=e.target.closest('[data-lt]');if(b)openT(b.dataset.lt)});
+['input','change'].forEach(ty=>$('#lart').addEventListener(ty,e=>{if(CUR&&e.target.hasAttribute('data-lr')){if(e.target.id==='Lfs'&&ty==='input')$L('fa').checked=false;CUR.u()}}));
+$('#lart').addEventListener('click',e=>{if(e.target.id==='Lcgo')calGo();if(e.target.id==='Llgo'&&CUR&&CUR.lab){const l=CUR.lab;setTab(l[0]);if(l[1]){$('#ex').value=l[1];$('#ex').dispatchEvent(new Event('change'));if(l[2])$('#demo').click()}}});
+function showL(){view='l';if(run){run=false;$('#run').textContent='Run'}['#pc','#pr','#tb','#ide'].forEach(x=>$(x).classList.add('hid'));$('#lp').classList.remove('hid');$('#tC').setAttribute('aria-pressed','false');$('#tR').setAttribute('aria-pressed','false');$('#tL').setAttribute('aria-pressed','true')}
+$('#tL').onclick=showL;
 /* --- undo and redo for the breadboard and the car builder --- */
 const U={c:{u:[],r:[],last:''},r:{u:[],r:[],last:''}};
 const ser=()=>tab==='c'?JSON.stringify({p:B.parts,w:B.wires,b:B.bat,d:B.board},(k,v)=>['h','burn','ang','a'].includes(k)?undefined:v):JSON.stringify({p:parts,w:wires,o:ol,u:uid});
 const ub=()=>{document.querySelectorAll('.und').forEach(b=>b.disabled=!U[tab].u.length);document.querySelectorAll('.red').forEach(b=>b.disabled=!U[tab].r.length)};
 function commit(){const h=U[tab],c=ser();if(h.last===''){h.last=c;return}if(c!==h.last){h.u.push(h.last);if(h.u.length>150)h.u.shift();h.r=[];h.last=c;try{localStorage.setItem('vb2_'+tab,c)}catch(e){}}}
 function loadS(c){const o=JSON.parse(c);if(tab==='c'){B.parts=o.p;B.wires=o.w;B.bat=o.b;$('#bsel').value=B.bat;setBoardC(o.d||'uno');B.sel=-1;B.pend=null;dirty=true;drawB()}else{parts=o.p;wires=o.w;ol=o.o;uid=o.u;sel=null;selV=-1;selPin=null;rdr()}}
-function undo(){commit();const h=U[tab];if(!h.u.length)return;h.r.push(h.last);h.last=h.u.pop();loadS(h.last);ub()}
-function redo(){const h=U[tab];if(!h.r.length)return;h.u.push(h.last);h.last=h.r.pop();loadS(h.last);ub()}
+function undo(){if(view==='l')return;commit();const h=U[tab];if(!h.u.length)return;h.r.push(h.last);h.last=h.u.pop();loadS(h.last);ub()}
+function redo(){if(view==='l')return;const h=U[tab];if(!h.r.length)return;h.u.push(h.last);h.last=h.r.pop();loadS(h.last);ub()}
 document.querySelectorAll('.und').forEach(b=>b.addEventListener('click',undo));document.querySelectorAll('.red').forEach(b=>b.addEventListener('click',redo));
 ['click','change','pointerup','keyup'].forEach(t=>document.addEventListener(t,()=>{commit();ub()}));
 document.addEventListener('keydown',e=>{const t=e.target.tagName,ty=e.target.type;if(t==='TEXTAREA'||t==='SELECT'||(t==='INPUT'&&ty!=='range'&&ty!=='checkbox'))return;
  if((e.ctrlKey||e.metaKey)&&!e.altKey){const k=e.key.toLowerCase();if(k==='z'&&!e.shiftKey){e.preventDefault();undo()}else if(k==='y'||(k==='z'&&e.shiftKey)){e.preventDefault();redo()}}});
 try{const a=JSON.parse(localStorage.getItem('vb2_c')||'null');if(a&&Array.isArray(a.p)&&Array.isArray(a.w)){B.parts=a.p.filter(q=>PD[q.t]);B.wires=a.w;B.bat=+a.b||0;$('#bsel').value=B.bat;setBoardC(a.d||'uno')}
  const r=JSON.parse(localStorage.getItem('vb2_r')||'null');if(r&&Array.isArray(r.p)&&Array.isArray(r.w)&&Array.isArray(r.o)){parts=r.p.filter(q=>PT[q.t]);wires=r.w;ol=r.o;uid=r.u||uid}}catch(e){}
-document.addEventListener('keydown',e=>{const t=e.target.tagName;if(t==='TEXTAREA'||t==='SELECT'||(t==='INPUT'&&e.target.type!=='range'&&e.target.type!=='checkbox'))return;
+document.addEventListener('keydown',e=>{const t=e.target.tagName;if(view==='l'||t==='TEXTAREA'||t==='SELECT'||(t==='INPUT'&&e.target.type!=='range'&&e.target.type!=='checkbox'))return;
  if(e.key==='Escape'){B.pend=null;selPin=null;if(B.tool!=='wire')setTool('wire');tab==='c'?drawB():drawW();return}
  if(e.key==='Delete'||e.key==='Backspace'){if(tab==='c'&&B.sel>=0){B.parts.splice(B.sel,1);B.sel=-1;dirty=true;drawB();e.preventDefault()}
   else if(tab==='r'&&omode==='o'&&selV>=0){ol.splice(selV,1);selV=-1;rdr();e.preventDefault()}
   else if(tab==='r'&&sel){const id=sel;parts=parts.filter(q=>q.id!==id);wires=wires.filter(w=>!w[0].startsWith(id+':')&&!w[1].startsWith(id+':'));sel=null;rdr();e.preventDefault()}}});
 $('#insp').addEventListener('change',e=>{const p=parts.find(q=>q.id===sel);if(!p)return;const d=e.target.dataset;if(d.nx!==undefined){p.x=cl(200+(+e.target.value||0),5,395);rdr()}if(d.ny!==undefined){p.y=cl(bb().y0+(+e.target.value||0),25,450);rdr()}if(d.lk!==undefined){p.lk=e.target.checked?1:0}});
 $('#insp').addEventListener('click',e=>{const nd=e.target.dataset.nd,p=parts.find(q=>q.id===sel);if(nd===undefined||!p||p.lk)return;const a=nd.split(',').map(Number);p.x+=a[0];p.y+=a[1];drawD();chk();insp()});
-document.addEventListener('keydown',e=>{const t=e.target.tagName;if(t==='TEXTAREA'||t==='SELECT'||t==='INPUT')return;if(tab==='r'&&omode==='p'&&sel&&e.key.startsWith('Arrow')){const p=parts.find(q=>q.id===sel);if(!p||p.lk)return;const k=e.shiftKey?10:1;p.x+=e.key==='ArrowRight'?k:e.key==='ArrowLeft'?-k:0;p.y+=e.key==='ArrowDown'?k:e.key==='ArrowUp'?-k:0;e.preventDefault();drawD();chk();insp()}});
+document.addEventListener('keydown',e=>{const t=e.target.tagName;if(t==='TEXTAREA'||t==='SELECT'||t==='INPUT')return;if(view!=='l'&&tab==='r'&&omode==='p'&&sel&&e.key.startsWith('Arrow')){const p=parts.find(q=>q.id===sel);if(!p||p.lk)return;const k=e.shiftKey?10:1;p.x+=e.key==='ArrowRight'?k:e.key==='ArrowLeft'?-k:0;p.y+=e.key==='ArrowDown'?k:e.key==='ArrowUp'?-k:0;e.preventDefault();drawD();chk();insp()}});
 $('#cclr').onclick=()=>{lines=[];$('#con').textContent=''};
 $('#ccopy').onclick=async()=>{try{await navigator.clipboard.writeText($('#code').value);$('#st').textContent='Code copied to the clipboard.';$('#st').className='st ok'}catch(e){$('#code').select();$('#st').textContent='Press Ctrl+C to copy the selected code.'}};
-drawB();setMode('o');rdr();setTab('c');commit();ub();requestAnimationFrame(frame);
+drawB();setMode('o');rdr();setTab('c');commit();ub();openT('ir');showL();requestAnimationFrame(frame);
 })();
 </script>
 </body>
